@@ -1,7 +1,7 @@
 name: callingitnow
 services:
 - name: web
-  source_dir: /frontend
+  source_dir: frontend
   github:
     repo: acforster/callingitnow
     branch: main
@@ -18,7 +18,7 @@ services:
     value: production
 
 - name: api
-  source_dir: /backend
+  source_dir: backend
   github:
     repo: acforster/callingitnow
     branch: main
