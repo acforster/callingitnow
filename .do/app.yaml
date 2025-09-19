@@ -3,7 +3,7 @@ services:
 - name: web
   source_dir: /frontend
   github:
-    repo: your-username/callingitnow
+    repo: acforster/callingitnow
     branch: main
   run_command: npm start
   environment_slug: node-js
@@ -20,7 +20,7 @@ services:
 - name: api
   source_dir: /backend
   github:
-    repo: your-username/callingitnow
+    repo: acforster/callingitnow
     branch: main
   run_command: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080
   environment_slug: python
