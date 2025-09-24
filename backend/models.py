@@ -151,7 +151,7 @@ class GroupPrediction(Base):
 
 
 class GroupVote(Base):
-    __tablename__ = "group_votes"
+    __tablename__ = "group_vote"
     
     vote_id = Column(Integer, primary_key=True, index=True)
     prediction_id = Column(Integer, ForeignKey("group_predictions.prediction_id"), nullable=False)
