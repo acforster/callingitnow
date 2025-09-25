@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import settings
 from database import Base
-from models import *  # Import all models
+from models import User, Prediction, Vote, Backing, LoginType, Visibility
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

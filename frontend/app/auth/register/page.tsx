@@ -37,7 +37,20 @@ export default function RegisterPage() {
       await registerUser(data.email, data.handle, data.password);
       router.push('/');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error. Please check if the database is properly configured.';
+      } else if (err.code === 'NETWORK_ERROR' || !err.response) {
+        errorMessage = 'Cannot connect to server. Please check if the API is running.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
