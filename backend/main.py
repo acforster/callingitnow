@@ -10,8 +10,7 @@ from datetime import datetime
 
 from config import settings
 from database import get_db, engine, Base
-from models import User, Prediction, Vote, Backing, Group, GroupMember, GroupPrediction, LoginType, Visibility
-from schemas import (
+from models import User, Prediction, Vote, Backing, LoginType, Visibilityfrom schemas import (
     UserCreate, UserResponse, UserProfile, Token, LoginRequest, GoogleAuthRequest,
     PredictionCreate, PredictionResponse, PredictionListResponse, VoteRequest, VoteResponse,
     BackingResponse, GroupCreate, GroupResponse, GroupMemberResponse,
