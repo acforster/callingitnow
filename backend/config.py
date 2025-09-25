@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://postgres:postgres@localhost:5432/callingitnow"
     
     # JWT
-    jwt_secret: str = "your-super-secret-jwt-key-here"
+    jwt_secret: str = "2703b54195a6521f1362e3e633ab89a3"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 30
     
