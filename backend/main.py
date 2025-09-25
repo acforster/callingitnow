@@ -14,9 +14,7 @@ from models import User, Prediction, Vote, Backing, LoginType, Visibility
 from schemas import (
     UserCreate, UserResponse, UserProfile, Token, LoginRequest, GoogleAuthRequest,
     PredictionCreate, PredictionResponse, PredictionListResponse, VoteRequest, VoteResponse,
-    BackingResponse, GroupCreate, GroupResponse, GroupMemberResponse,
-    GroupPredictionCreate, GroupPredictionResponse, PredictionReceipt,
-    LeaderboardCall, LeaderboardCreator, CategoryStats, ErrorResponse
+    BackingResponse, PredictionReceipt, ErrorResponse
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,

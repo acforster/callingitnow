@@ -3,6 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 from models import LoginType, Visibility
 
+
 # User schemas
 class UserBase(BaseModel):
     email: EmailStr
@@ -111,69 +112,6 @@ class BackingResponse(BaseModel):
         from_attributes = True
 
 
-# Group schemas
-class GroupBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=120)
-    description: str = Field(..., min_length=1)
-    visibility: GroupVisibility
-
-
-class GroupCreate(GroupBase):
-    pass
-
-
-class GroupResponse(GroupBase):
-    group_id: int
-    created_by: int
-    created_at: datetime
-    creator: UserResponse
-    member_count: int = 0
-    prediction_count: int = 0
-    
-    class Config:
-        from_attributes = True
-
-
-class GroupMemberResponse(BaseModel):
-    group_member_id: int
-    group_id: int
-    user_id: int
-    role: GroupRole
-    joined_at: datetime
-    user: UserResponse
-    
-    class Config:
-        from_attributes = True
-
-
-# Group prediction schemas
-class GroupPredictionBase(BaseModel):
-    title: str = Field(..., min_length=1, max_length=120)
-    content: str = Field(..., min_length=1)
-    category: str = Field(..., min_length=1, max_length=50)
-    allow_backing: bool = True
-
-
-class GroupPredictionCreate(GroupPredictionBase):
-    pass
-
-
-class GroupPredictionResponse(GroupPredictionBase):
-    prediction_id: int
-    group_id: int
-    user_id: int
-    timestamp: datetime
-    hash: str
-    user: UserResponse
-    vote_score: int = 0
-    backing_count: int = 0
-    user_vote: Optional[int] = None
-    user_backed: bool = False
-    
-    class Config:
-        from_attributes = True
-
-
 # Receipt schema
 class PredictionReceipt(BaseModel):
     prediction_id: int
@@ -183,28 +121,6 @@ class PredictionReceipt(BaseModel):
     timestamp: datetime
     hash: str
     verification_url: str
-
-
-# Leaderboard schemas
-class LeaderboardCall(BaseModel):
-    prediction_id: int
-    title: str
-    user_handle: str
-    score: int
-    backing_count: int
-
-
-class LeaderboardCreator(BaseModel):
-    user_id: int
-    handle: str
-    wisdom_level: int
-    prediction_count: int
-
-
-class CategoryStats(BaseModel):
-    category: str
-    prediction_count: int
-    total_score: int
 
 
 # Error schemas
