@@ -47,7 +47,7 @@ export default function PredictionPage() {
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
           <h1 className="text-2xl font-bold leading-6 text-gray-900">{prediction.title}</h1>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Called by @{prediction.user.handle} on {format(new Date(prediction.timestamp), 'MMMM d, yyyy')}
+            Called by @{prediction.user.handle} on {format(new Date(prediction.timestamp), "MMMM d, yyyy 'at' h:mm a")}
           </p>
         </div>
         <div className="px-4 py-5 sm:p-6">
