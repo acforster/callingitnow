@@ -1,8 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime
-from models import LoginType, Visibility, GroupVisibility, GroupRole
-
+from models import LoginType, Visibility
 
 # User schemas
 class UserBase(BaseModel):
