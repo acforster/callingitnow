@@ -4,17 +4,8 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    pkg-config \
-    libssl-dev \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Rust via rustup
-ENV RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .

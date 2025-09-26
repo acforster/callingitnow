@@ -6,7 +6,7 @@ from sqlalchemy import func, desc, asc
 from typing import Optional, List
 import hashlib
 import json
-from profanity_filter import ProfanityFilter
+from better_profanity import profanity
 from datetime import datetime
 
 from config import settings
@@ -31,9 +31,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Load the moderation model at startup
-# This model is optimized for speed
-profanity_filter = ProfanityFilter()
 
 # CORS middleware
 app.add_middleware(
@@ -144,8 +141,9 @@ def create_prediction(
 ):
     """Create a new prediction with content moderation."""
     # --- Content Moderation Check ---
+    # --- Content Moderation Check ---
     text_to_check = f"{prediction_data.title} {prediction_data.content}"
-    if profanity_filter.is_profane(text_to_check):
+    if profanity.is_profane(text_to_check):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This content violates our community guidelines regarding profanity."
