@@ -6,6 +6,7 @@ from sqlalchemy import func, desc, asc
 from typing import Optional, List
 import hashlib
 import json
+from detoxify import Detoxify
 from datetime import datetime
 
 from config import settings
@@ -29,6 +30,10 @@ app = FastAPI(
     description="API for the CallingItNow prediction platform",
     version="1.0.0"
 )
+
+# Load the moderation model at startup
+# This model is optimized for speed
+moderation_model = Detoxify('unbiased-cpu') 
 
 # CORS middleware
 app.add_middleware(
@@ -137,7 +142,23 @@ def create_prediction(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Create a new prediction."""
+    """Create a new prediction with content moderation."""
+    # --- Content Moderation Check ---
+    text_to_check = f"{prediction_data.title} {prediction_data.content}"
+    moderation_scores = moderation_model.predict(text_to_check)
+
+    # Define thresholds for blocking content (e.g., 80% confidence)
+    # We are most concerned with explicit threats and hate speech.
+    threshold = 0.8 
+    if (moderation_scores.get('threat', 0) > threshold or
+        moderation_scores.get('identity_hate', 0) > threshold or
+        moderation_scores.get('severe_toxicity', 0) > threshold):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This content violates our community guidelines regarding threats, hate speech, or severe toxicity."
+        )
+    # --- End of Moderation Check ---
+
     timestamp = datetime.utcnow()
     hash_value = generate_prediction_hash(
         current_user.user_id, 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/lib/auth';
+import { useSettings } from '@/lib/SettingsContext';
 import { predictionsAPI, Prediction, PredictionReceipt } from '@/lib/api';
 import ReceiptModal from './ReceiptModal';
 import { 
@@ -26,6 +27,7 @@ interface PredictionCardProps {
 
 export default function PredictionCard({ prediction, onUpdate }: PredictionCardProps) {
   const { user } = useAuth();
+  const { filterText } = useSettings();
   const [loading, setLoading] = useState(false);
   const [localVote, setLocalVote] = useState(prediction.user_vote);
   const [localBacked, setLocalBacked] = useState(prediction.user_backed);
@@ -150,13 +152,13 @@ export default function PredictionCard({ prediction, onUpdate }: PredictionCardP
       <div className="mb-4">
         <Link href={`/predictions/${prediction.prediction_id}`}>
           <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-primary-600 cursor-pointer">
-            {prediction.title}
+            {filterText(prediction.title)}
           </h3>
         </Link>
         <p className="text-gray-700 leading-relaxed">
           {prediction.content.length > 300 
-            ? `${prediction.content.substring(0, 300)}...` 
-            : prediction.content
+            ? `${filterText(prediction.content.substring(0, 300))}...` 
+            : filterText(prediction.content)
           }
         </p>
         {prediction.content.length > 300 && (
