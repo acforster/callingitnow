@@ -8,7 +8,7 @@ import hashlib
 import json
 from better_profanity import profanity
 from datetime import datetime
-
+from profanity_list import custom_bad_words
 from config import settings
 from database import get_db, engine, Base
 from models import User, Prediction, Vote, Backing, LoginType, Visibility
@@ -32,7 +32,6 @@ app = FastAPI(
 )
 
 # Enhance the profanity filter with custom words
-custom_bad_words = ["shitfuckyomamma"] # Add more words here, separated by commas
 profanity.add_censor_words(custom_bad_words)
 
 # CORS middleware
