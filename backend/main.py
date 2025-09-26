@@ -6,7 +6,7 @@ from sqlalchemy import func, desc, asc
 from typing import Optional, List
 import hashlib
 import json
-from detoxify import Detoxify
+from profanity_filter import ProfanityFilter
 from datetime import datetime
 
 from config import settings
@@ -33,7 +33,7 @@ app = FastAPI(
 
 # Load the moderation model at startup
 # This model is optimized for speed
-moderation_model = Detoxify('unbiased-cpu') 
+profanity_filter = ProfanityFilter()
 
 # CORS middleware
 app.add_middleware(
@@ -145,17 +145,10 @@ def create_prediction(
     """Create a new prediction with content moderation."""
     # --- Content Moderation Check ---
     text_to_check = f"{prediction_data.title} {prediction_data.content}"
-    moderation_scores = moderation_model.predict(text_to_check)
-
-    # Define thresholds for blocking content (e.g., 80% confidence)
-    # We are most concerned with explicit threats and hate speech.
-    threshold = 0.8 
-    if (moderation_scores.get('threat', 0) > threshold or
-        moderation_scores.get('identity_hate', 0) > threshold or
-        moderation_scores.get('severe_toxicity', 0) > threshold):
+    if profanity_filter.is_profane(text_to_check):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This content violates our community guidelines regarding threats, hate speech, or severe toxicity."
+            detail="This content violates our community guidelines regarding profanity."
         )
     # --- End of Moderation Check ---
 
