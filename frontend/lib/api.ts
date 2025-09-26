@@ -96,6 +96,16 @@ export interface AuthResponse {
   token_type: string;
 }
 
+export interface PredictionReceipt {
+  prediction_id: number;
+  title: string;
+  content: string;
+  user_handle: string;
+  timestamp: string;
+  hash: string;
+  verification_url: string;
+}
+
 // Auth API
 export const authAPI = {
   login: async (data: LoginData): Promise<AuthResponse> => {
@@ -144,7 +154,7 @@ export const predictionsAPI = {
     await api.post(`/predictions/${id}/back`);
   },
 
-  getReceipt: async (id: number): Promise<any> => {
+  getReceipt: async (id: number): Promise<PredictionReceipt> => {
     const response = await api.get(`/predictions/${id}/receipt`);
     return response.data;
   },
