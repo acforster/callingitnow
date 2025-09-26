@@ -31,6 +31,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Enhance the profanity filter with custom words
+custom_bad_words = ["shitfuckyomamma"] # Add more words here, separated by commas
+profanity.add_censor_words(custom_bad_words)
 
 # CORS middleware
 app.add_middleware(
