@@ -145,7 +145,7 @@ def create_prediction(
     # --- Content Moderation Check ---
     # --- Content Moderation Check ---
     text_to_check = f"{prediction_data.title} {prediction_data.content}"
-    if profanity.is_profane(text_to_check):
+    if profanity.contains_profanity(text_to_check):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This content violates our community guidelines regarding profanity."
