@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/lib/auth';
-import { predictionsAPI, Prediction } from '@/lib/api';
+import { predictionsAPI, Prediction, PredictionReceipt } from '@/lib/api';
+import ReceiptModal from './ReceiptModal';
 import { 
   HandThumbUpIcon, 
   HandThumbDownIcon, 
@@ -30,6 +31,8 @@ export default function PredictionCard({ prediction, onUpdate }: PredictionCardP
   const [localBacked, setLocalBacked] = useState(prediction.user_backed);
   const [voteScore, setVoteScore] = useState(prediction.vote_score);
   const [backingCount, setBackingCount] = useState(prediction.backing_count);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [receiptData, setReceiptData] = useState<PredictionReceipt | null>(null);
 
   const handleVote = async (value: number) => {
     if (!user || loading) return;
@@ -38,7 +41,6 @@ export default function PredictionCard({ prediction, onUpdate }: PredictionCardP
     try {
       await predictionsAPI.vote(prediction.prediction_id, value);
       
-      // Update local state
       const oldVote = localVote || 0;
       const newVote = localVote === value ? 0 : value;
       
@@ -76,6 +78,20 @@ export default function PredictionCard({ prediction, onUpdate }: PredictionCardP
       // Could add a toast notification here
     } catch (error) {
       console.error('Failed to copy:', error);
+    }
+  };
+
+  const handleOpenReceipt = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const data = await predictionsAPI.getReceipt(prediction.prediction_id);
+      setReceiptData(data);
+      setIsReceiptModalOpen(true);
+    } catch (error) {
+      console.error('Failed to get receipt:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -229,13 +245,13 @@ export default function PredictionCard({ prediction, onUpdate }: PredictionCardP
           </button>
 
           {/* Receipt */}
-          <Link
-            href={`/predictions/${prediction.prediction_id}/receipt`}
+          <button
+            onClick={handleOpenReceipt}
             className="flex items-center space-x-1 px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
           >
             <DocumentDuplicateIcon className="h-4 w-4" />
             <span className="text-sm font-medium">Receipt</span>
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -245,6 +261,12 @@ export default function PredictionCard({ prediction, onUpdate }: PredictionCardP
           Hash: {prediction.hash.substring(0, 16)}...
         </p>
       </div>
+
+      <ReceiptModal 
+        isOpen={isReceiptModalOpen} 
+        onClose={() => setIsReceiptModalOpen(false)} 
+        receipt={receiptData} 
+      />
     </div>
   );
 }
