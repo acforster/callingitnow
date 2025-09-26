@@ -1,8 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Filter } from 'bad-words';
-
+import Filter from 'bad-words';
 
 // Define the shape of our settings
 interface Settings {
