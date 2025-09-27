@@ -259,8 +259,8 @@ export default function PredictionCard({ prediction, onUpdate }: PredictionCardP
 
       {/* Hash (for verification) */}
       <div className="mt-3 pt-3 border-t border-gray-100">
-        <p className="text-xs text-gray-400 font-mono">
-          Hash: {prediction.hash.substring(0, 16)}...
+        <p className="text-xs text-gray-400 font-mono break-all">
+          CallID: {prediction.hash}
         </p>
       </div>
 
