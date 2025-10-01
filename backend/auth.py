@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 import bcrypt
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from config import settings
@@ -76,16 +76,20 @@ def get_current_user(
 
 
 def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ) -> Optional[User]:
     """Get the current authenticated user, but allow None if not authenticated."""
-    if not credentials:
+    if not authorization:
         return None
     
     try:
-        token_data = verify_token(credentials.credentials)
+        scheme, token = authorization.split()
+        if scheme.lower() != 'bearer':
+            return None
+        token_data = verify_token(token)
         user = db.query(User).filter(User.user_id == token_data.user_id).first()
         return user
-    except HTTPException:
+    except (ValueError, HTTPException):
+        # Catches split errors, malformed headers, and invalid tokens
         return None
