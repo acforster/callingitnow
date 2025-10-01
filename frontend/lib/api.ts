@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import Cookies from 'js-cookie';
 
-const API_BASE = '/api';
+const API_BASE = '/callingitnow-backend';
 
 // Create axios instance
 const api = axios.create({
