@@ -48,7 +48,10 @@ async def log_request_path(request, call_next):
     print(f"Request received for path: {request.url.path}")
     response = await call_next(request)
     return response
-    
+
+@app.get("/healthcheck")
+def healthcheck():
+    return {"status": "ok"}
 
 def generate_prediction_hash(user_id: int, title: str, content: str, timestamp: datetime) -> str:
     """Generate a unique hash for a prediction."""

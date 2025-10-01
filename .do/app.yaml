@@ -62,6 +62,6 @@ databases:
 
 domains:
 - domain: callingitnow.com
-  type: PRIMARY
-- domain: www.callingitnow.com
   type: ALIAS
+- domain: www.callingitnow.com
+  type: PRIMARY
