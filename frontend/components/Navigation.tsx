@@ -16,7 +16,7 @@ export default function Navigation() {
 
   const navigation = [
     { name: 'Home', href: '/', current: true },
-    { name: 'Leaderboard', href: '/leaderboard', current: false },
+    //{ name: 'Leaderboard', href: '/leaderboard', current: false },
     { name: 'Groups', href: '/groups', current: false },
   ];
 
