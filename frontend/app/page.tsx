@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { predictionsAPI, Prediction } from '@/lib/api';
-import PredictionCard from '@/components/PredictionCard';
+import CallCard from '@/components/CallCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<'recent' | 'popular'>('recent');
+  const [activeTab, setActiveTab] = useState<'recent' | 'popular'>('popular');
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,8 +45,8 @@ export default function HomePage() {
     <div className="space-y-6">
       <div className="flex justify-center border-b border-gray-200">
         <div className="flex space-x-2">
-          <Tab tabName="recent" title="Recent Calls" />
           <Tab tabName="popular" title="Popular Calls" />
+          <Tab tabName="recent" title="Recent Calls" />
         </div>
       </div>
 
@@ -61,7 +61,7 @@ export default function HomePage() {
       ) : predictions.length > 0 ? (
         <div className="space-y-6">
           {predictions.map((prediction) => (
-            <PredictionCard key={prediction.prediction_id} prediction={prediction} />
+            <CallCard key={prediction.prediction_id} call={prediction} />
           ))}
         </div>
       ) : (

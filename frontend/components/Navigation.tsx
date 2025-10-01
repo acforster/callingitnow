@@ -51,7 +51,7 @@ export default function Navigation() {
                     {user ? (
                       <>
                         <Link
-                          href="/predictions/new"
+                          href="/calls/new"
                           className="btn-primary inline-flex items-center"
                         >
                           <PlusIcon className="h-4 w-4 mr-2" />
@@ -100,13 +100,13 @@ export default function Navigation() {
                               <Menu.Item>
                                 {({ active }) => (
                                   <Link
-                                    href="/predictions/my"
+                                    href="/calls/my"
                                     className={classNames(
                                       active ? 'bg-gray-100' : '',
                                       'block px-4 py-2 text-sm text-gray-700'
                                     )}
                                   >
-                                    My Predictions
+                                    My Calls
                                   </Link>
                                 )}
                               </Menu.Item>
@@ -186,7 +186,7 @@ export default function Navigation() {
                     <div className="mt-3 space-y-1">
                       <Disclosure.Button
                         as={Link}
-                        href="/predictions/new"
+                        href="/calls/new"
                         className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
                       >
                         Make a Call
@@ -200,10 +200,10 @@ export default function Navigation() {
                       </Disclosure.Button>
                       <Disclosure.Button
                         as={Link}
-                        href="/predictions/my"
+                        href="/calls/my"
                         className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
                       >
-                        My Predictions
+                        My Calls
                       </Disclosure.Button>
                       <Disclosure.Button
                         as="button"

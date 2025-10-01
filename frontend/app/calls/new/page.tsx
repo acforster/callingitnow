@@ -7,7 +7,7 @@ import { predictionsAPI } from '@/lib/api';
 import { useForm } from 'react-hook-form';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
-interface PredictionForm {
+interface CallForm {
   title: string;
   content: string;
   category: string;
@@ -28,7 +28,7 @@ const categories = [
   'Other'
 ];
 
-export default function NewPredictionPage() {
+export default function NewCallPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ export default function NewPredictionPage() {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<PredictionForm>({
+  } = useForm<CallForm>({
     defaultValues: {
       visibility: 'public',
       allow_backing: true,
@@ -48,7 +48,7 @@ export default function NewPredictionPage() {
 
   const watchedContent = watch('content', '');
 
-  const onSubmit = async (data: PredictionForm) => {
+  const onSubmit = async (data: CallForm) => {
     if (!user) {
       router.push('/auth/login');
       return;
@@ -58,10 +58,12 @@ export default function NewPredictionPage() {
     setError(null);
 
     try {
-      const prediction = await predictionsAPI.create(data);
-      router.push(`/predictions/${prediction.prediction_id}`);
+      // The API still uses 'prediction', so we call it as such
+      const newCall = await predictionsAPI.create(data);
+      // But we redirect to the new frontend URL
+      router.push(`/calls/${newCall.prediction_id}`);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create prediction. Please try again.');
+      setError(err.response?.data?.detail || 'Failed to create call. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -71,10 +73,10 @@ export default function NewPredictionPage() {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          Sign in to make a prediction
+          Sign in to make a call
         </h1>
         <p className="text-gray-600 mb-6">
-          You need to be signed in to create predictions.
+          You need to be signed in to create calls.
         </p>
         <a href="/auth/login" className="btn-primary">
           Sign In
@@ -87,10 +89,10 @@ export default function NewPredictionPage() {
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Make a Prediction
+          Make a Call
         </h1>
         <p className="text-gray-600">
-          Record your prediction about a future event. Be specific and clear about what you're predicting.
+          Record your call about a future event. Be specific and clear about what you're calling.
         </p>
       </div>
 
@@ -106,7 +108,7 @@ export default function NewPredictionPage() {
             {/* Title */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Prediction Title *
+                Call Title *
               </label>
               <input
                 {...register('title', {
@@ -122,7 +124,7 @@ export default function NewPredictionPage() {
                 })}
                 type="text"
                 className="input-field"
-                placeholder="What are you predicting will happen?"
+                placeholder="What are you calling will happen?"
               />
               {errors.title && (
                 <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
@@ -132,26 +134,26 @@ export default function NewPredictionPage() {
             {/* Content */}
             <div>
               <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-                Detailed Prediction *
+                Detailed Call *
               </label>
               <textarea
                 {...register('content', {
-                  required: 'Prediction details are required',
+                  required: 'Call details are required',
                   minLength: {
                     value: 20,
-                    message: 'Prediction must be at least 20 characters',
+                    message: 'Call must be at least 20 characters',
                   },
                 })}
                 rows={6}
                 className="input-field"
-                placeholder="Provide detailed information about your prediction. Include timeframes, specific conditions, and any relevant context..."
+                placeholder="Provide detailed information about your call. Include timeframes, specific conditions, and any relevant context..."
               />
               <div className="flex justify-between items-center mt-1">
                 {errors.content ? (
                   <p className="text-sm text-red-600">{errors.content.message}</p>
                 ) : (
                   <p className="text-sm text-gray-500">
-                    Be specific and clear about what you're predicting
+                    Be specific and clear about what you're calling
                   </p>
                 )}
                 <p className="text-sm text-gray-400">
@@ -200,7 +202,7 @@ export default function NewPredictionPage() {
                   <label htmlFor="public" className="ml-3 block text-sm text-gray-700">
                     <span className="font-medium">Public</span>
                     <span className="block text-gray-500">
-                      Anyone can see this prediction and vote on it
+                      Anyone can see this call and vote on it
                     </span>
                   </label>
                 </div>
@@ -215,7 +217,7 @@ export default function NewPredictionPage() {
                   <label htmlFor="private" className="ml-3 block text-sm text-gray-700">
                     <span className="font-medium">Private</span>
                     <span className="block text-gray-500">
-                      Only you can see this prediction
+                      Only you can see this call
                     </span>
                   </label>
                 </div>
@@ -232,9 +234,9 @@ export default function NewPredictionPage() {
                   className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                 />
                 <label htmlFor="allow_backing" className="ml-3 block text-sm text-gray-700">
-                  <span className="font-medium">Allow others to back this prediction</span>
+                  <span className="font-medium">Allow others to back this call</span>
                   <span className="block text-gray-500">
-                    Other users can show support for your prediction, increasing your wisdom level
+                    Other users can show support for your call, increasing your wisdom level
                   </span>
                 </label>
               </div>
@@ -259,7 +261,7 @@ export default function NewPredictionPage() {
             {loading ? (
               <LoadingSpinner size="sm" />
             ) : (
-              'Create Prediction'
+              'Make Call'
             )}
           </button>
         </div>
@@ -268,14 +270,14 @@ export default function NewPredictionPage() {
       {/* Info Box */}
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="text-sm font-medium text-blue-900 mb-2">
-          📝 Prediction Guidelines
+          📝 Call Guidelines
         </h3>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Be specific about what you're predicting and when it will happen</li>
+          <li>• Be specific about what you're calling and when it will happen</li>
           <li>• Avoid vague or ambiguous statements</li>
           <li>• Include relevant context and reasoning</li>
-          <li>• Keep predictions family-friendly and respectful</li>
-          <li>• Each prediction gets a unique hash for verification</li>
+          <li>• Keep calls family-friendly and respectful</li>
+          <li>• Each call gets a unique hash for verification</li>
         </ul>
       </div>
     </div>
