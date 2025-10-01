@@ -136,7 +136,8 @@ export const predictionsAPI = {
     sort?: 'recent' | 'popular' | 'controversial';
     page?: number;
     per_page?: number;
-    user_id?: number; // This is the key for our logic
+    user_id?: number;
+    safe_search?: boolean;
   }): Promise<PredictionListResponse> => {
     const endpoint = params?.user_id ? '/predictions/my' : '/predictions';
     const response = await api.get(endpoint, { params });

@@ -44,6 +44,7 @@ class Prediction(Base):
     allow_backing = Column(Boolean, default=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     hash = Column(String(255), nullable=False, unique=True)
+    contains_profanity = Column(Boolean, default=False, nullable=False)
     
     # Relationships
     user = relationship("User", back_populates="predictions")

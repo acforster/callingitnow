@@ -177,69 +177,46 @@ def get_current_user_profile(current_user: User = Depends(get_current_user), db:
 
 
 # Prediction endpoints
-@app.post("/predictions", response_model=PredictionResponse)
-def create_prediction(
-    prediction_data: PredictionCreate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Create a new prediction with content moderation."""
-    # --- Content Moderation Check ---
-    # --- Content Moderation Check ---
-    text_to_check = f"{prediction_data.title} {prediction_data.content}"
-    if profanity.contains_profanity(text_to_check):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This content violates our community guidelines regarding profanity."
-        )
-    # --- End of Moderation Check ---
+@app.post("/predictions", response_model=PredictionResponse, status_code=status.HTTP_201_CREATED)
+def create_prediction(prediction_data: PredictionCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Create a new prediction."""
+    # Check for profanity but don't censor here
+    has_profanity = profanity.contains_profanity(prediction_data.title) or profanity.contains_profanity(prediction_data.content)
 
-    timestamp = datetime.utcnow()
-    hash_value = generate_prediction_hash(
-        current_user.user_id, 
-        prediction_data.title, 
-        prediction_data.content, 
-        timestamp
+    # Censor content for display later if needed
+    censored_title = profanity.censor(prediction_data.title)
+    censored_content = profanity.censor(prediction_data.content)
+
+    now = datetime.utcnow()
+    prediction_hash = generate_prediction_hash(
+        user_id=current_user.user_id, 
+        title=prediction_data.title, 
+        content=prediction_data.content, 
+        timestamp=now
     )
-    
+
     prediction = Prediction(
         user_id=current_user.user_id,
-        title=prediction_data.title,
-        content=prediction_data.content,
+        title=censored_title, # Store censored version
+        content=censored_content, # Store censored version
         category=prediction_data.category,
         visibility=prediction_data.visibility,
         allow_backing=prediction_data.allow_backing,
-        timestamp=timestamp,
-        hash=hash_value
+        timestamp=now,
+        hash=prediction_hash,
+        contains_profanity=has_profanity
     )
-    
     db.add(prediction)
     db.commit()
     db.refresh(prediction)
-    
-    # Return with additional data
+
     return PredictionResponse(
-        prediction_id=prediction.prediction_id,
-        user_id=prediction.user_id,
-        title=prediction.title,
-        content=prediction.content,
-        category=prediction.category,
-        visibility=prediction.visibility,
-        allow_backing=prediction.allow_backing,
-        timestamp=prediction.timestamp,
-        hash=prediction.hash,
-        user=UserResponse(
-            user_id=current_user.user_id,
-            email=current_user.email,
-            handle=current_user.handle,
-            login_type=current_user.login_type,
-            wisdom_level=current_user.wisdom_level,
-            created_at=current_user.created_at
-        ),
+        **prediction.__dict__,
+        user=prediction.user,
         vote_score=0,
-        backing_count=0,
         user_vote=None,
-        user_backed=False
+        user_backed=False,
+        backing_count=0
     )
 
 
@@ -249,6 +226,7 @@ def get_predictions(
     sort: str = Query("recent", regex="^(recent|popular|controversial)$"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
+    safe_search: bool = False, # Add this line
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
@@ -257,6 +235,10 @@ def get_predictions(
     
     if category:
         query = query.filter(Prediction.category == category)
+        
+    # Add this block
+    if safe_search:
+        query = query.filter(Prediction.contains_profanity == False)
     
     # Apply sorting
     if sort == "recent":
@@ -289,20 +271,13 @@ def get_predictions(
             allow_backing=prediction.allow_backing,
             timestamp=prediction.timestamp,
             hash=prediction.hash,
-            user=UserResponse(
-                user_id=prediction.user.user_id,
-                email=prediction.user.email,
-                handle=prediction.user.handle,
-                login_type=prediction.user.login_type,
-                wisdom_level=prediction.user.wisdom_level,
-                created_at=prediction.user.created_at
-            ),
+            user=prediction.user,
             vote_score=vote_score,
             backing_count=backing_count,
             user_vote=user_vote,
             user_backed=user_backed
         ))
-    
+        
     return PredictionListResponse(
         predictions=prediction_responses,
         total=total,
