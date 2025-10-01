@@ -80,6 +80,39 @@ def get_user_backing(prediction_id: int, user_id: Optional[int], db: Session) ->
     backing = db.query(Backing).filter(Backing.prediction_id == prediction_id, Backing.backer_user_id == user_id).first()
     return backing is not None
 
+@app.get("/predictions/my", response_model=PredictionListResponse)
+def list_my_predictions(
+    page: int = 1,
+    per_page: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """List all predictions for the current user."""
+    query = db.query(Prediction).filter(Prediction.user_id == current_user.user_id)
+    query = query.order_by(Prediction.timestamp.desc())
+    
+    total = query.count()
+    predictions_db = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    # This part requires that your main.py imports PredictionResponse
+    # and PredictionListResponse from schemas.py
+    predictions_resp = [
+        PredictionResponse(
+            **prediction.__dict__,
+            user=prediction.user,
+            vote_score=calculate_vote_score(prediction.prediction_id, db),
+            user_vote=get_user_vote(prediction.prediction_id, current_user.user_id, db),
+            user_backed=get_user_backing(prediction.prediction_id, current_user.user_id, db),
+            backing_count=db.query(Backing).filter(Backing.prediction_id == prediction.prediction_id).count()
+        ) for prediction in predictions_db
+    ]
+
+    return PredictionListResponse(
+        predictions=predictions_resp,
+        total=total,
+        page=page,
+        per_page=per_page
+    )
 
 # Auth endpoints
 @app.post("/auth/register", response_model=Token)
