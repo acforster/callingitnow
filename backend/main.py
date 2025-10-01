@@ -43,6 +43,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def log_request_path(request, call_next):
+    print(f"Request received for path: {request.url.path}")
+    response = await call_next(request)
+    return response
+    
 
 def generate_prediction_hash(user_id: int, title: str, content: str, timestamp: datetime) -> str:
     """Generate a unique hash for a prediction."""
