@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Enum, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import ENUM as pgEnum
 from database import Base
 import enum
 
@@ -105,7 +104,7 @@ class Group(Base):
     group_id = Column(Integer, primary_key=True, index=True)
     name = Column(String(120), nullable=False, unique=True)
     description = Column(Text, nullable=False)
-    visibility = Column(Enum(GroupVisibility, native_enum=False), nullable=False)    
+    visibility = Column(String(255), nullable=False)    
     created_by = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

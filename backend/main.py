@@ -511,10 +511,6 @@ def get_prediction_receipt(
 def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Create a new group.
-
-    - **name**: The name of the group (must be unique).
-    - **description**: A description for the group.
-    - **visibility**: The group's visibility ('public', 'private', or 'secret').
     """
     db_group = db.query(Group).filter(Group.name == group.name).first()
     if db_group:
@@ -523,10 +519,11 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
             detail="A group with this name already exists."
         )
 
+    # Simple, clean ORM object creation
     new_group = Group(
         name=group.name,
         description=group.description,
-        visibility=group.visibility.value,  
+        visibility=group.visibility.value, # Pass the lowercase string value
         created_by=current_user.user_id
     )
     db.add(new_group)
@@ -535,14 +532,13 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
     new_member = GroupMember(
         group_id=new_group.group_id,
         user_id=current_user.user_id,
-        role=GroupRole.OWNER
+        role=GroupRole.OWNER.value # Also use .value for the role
     )
     db.add(new_member)
     
     db.commit()
     db.refresh(new_group)
 
-    #... inside create_group, at the end
     return GroupResponse(
         group_id=new_group.group_id,
         name=new_group.name,
@@ -550,8 +546,9 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
         visibility=new_group.visibility,
         creator=new_group.creator,
         created_at=new_group.created_at,
-        member_count=1  # The creator is the first member
+        member_count=1
     )
+
 
 @app.get("/groups", response_model=GroupListResponse, tags=["groups"])
 def get_groups(db: Session = Depends(get_db)):
