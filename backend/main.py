@@ -521,7 +521,7 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
             detail="A group with this name already exists."
         )
 
-        new_group = Group(
+    new_group = Group(
         name=group.name,
         description=group.description,
         visibility=group.visibility.value,  # <-- Add .value here
