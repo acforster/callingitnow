@@ -16,7 +16,8 @@ from models import User, Prediction, Vote, Backing, Group, GroupMember, LoginTyp
 from schemas import (
     UserCreate, UserResponse, UserProfile, Token, LoginRequest, GoogleAuthRequest,
     PredictionCreate, PredictionResponse, PredictionListResponse, VoteRequest, VoteResponse,
-    BackingResponse, PredictionReceipt, ErrorResponse, GroupCreate, GroupResponse, GroupListResponse
+    BackingResponse, PredictionReceipt, ErrorResponse, GroupCreate, GroupResponse, GroupListResponse,
+    MessageResponse
 )
 
 from auth import (
@@ -575,9 +576,10 @@ def get_groups(db: Session = Depends(get_db)):
     return GroupListResponse(groups=group_responses)
 
 @app.get("/groups/{group_id}", response_model=GroupResponse, tags=["groups"])
-def get_group(group_id: int, db: Session = Depends(get_db)):
+def get_group(group_id: int, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user_optional)):
     """
     Get details for a single group by its ID.
+    Includes 'is_member' flag if a user is authenticated.
     """
     group = db.query(Group).filter(Group.group_id == group_id).first()
     if not group:
@@ -587,6 +589,13 @@ def get_group(group_id: int, db: Session = Depends(get_db)):
         )
 
     member_count = db.query(GroupMember).filter(GroupMember.group_id == group.group_id).count()
+    
+    is_member = None
+    if current_user:
+        is_member = db.query(GroupMember).filter(
+            GroupMember.group_id == group_id,
+            GroupMember.user_id == current_user.user_id
+        ).first() is not None
 
     return GroupResponse(
         group_id=group.group_id,
@@ -595,8 +604,52 @@ def get_group(group_id: int, db: Session = Depends(get_db)):
         visibility=group.visibility,
         creator=group.creator,
         created_at=group.created_at,
-        member_count=member_count
+        member_count=member_count,
+        is_member=is_member
     )
+
+@app.post("/groups/{group_id}/join", response_model=MessageResponse, tags=["groups"])
+def join_group(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Allows the current user to join a public group.
+    """
+    # Find the group
+    group = db.query(Group).filter(Group.group_id == group_id).first()
+    if not group:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Group not found."
+        )
+
+    # For now, only allow joining public groups
+    if group.visibility != 'public':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This group is private and cannot be joined directly."
+        )
+
+    # Check if user is already a member
+    existing_member = db.query(GroupMember).filter(
+        GroupMember.group_id == group_id,
+        GroupMember.user_id == current_user.user_id
+    ).first()
+
+    if existing_member:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You are already a member of this group."
+        )
+
+    # Create the new membership
+    new_member = GroupMember(
+        group_id=group_id,
+        user_id=current_user.user_id,
+        role=GroupRole.MEMBER.value
+    )
+    db.add(new_member)
+    db.commit()
+
+    return MessageResponse(message="Successfully joined group.")
 
 
 if __name__ == "__main__":

@@ -149,3 +149,6 @@ class GroupResponse(GroupBase):
 
 class GroupListResponse(BaseModel):
     groups: List[GroupResponse]
+
+class MessageResponse(BaseModel):
+    message: str
