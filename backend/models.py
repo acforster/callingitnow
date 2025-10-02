@@ -15,6 +15,17 @@ class Visibility(enum.Enum):
     PRIVATE = "private"
 
 
+class GroupVisibility(enum.Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    SECRET = "secret"
+
+
+class GroupRole(enum.Enum):
+    OWNER = "owner"
+    ADMIN = "admin"
+    MEMBER = "member"
+
 class User(Base):
     __tablename__ = "users"
     
@@ -30,6 +41,9 @@ class User(Base):
     predictions = relationship("Prediction", back_populates="user")
     votes = relationship("Vote", back_populates="user")
     backings = relationship("Backing", back_populates="backer")
+    created_groups = relationship("Group", back_populates="creator")
+    memberships = relationship("GroupMember", back_populates="user")
+
 
 
 class Prediction(Base):
@@ -83,3 +97,34 @@ class Backing(Base):
     
     # Unique constraint
     __table_args__ = (UniqueConstraint('prediction_id', 'backer_user_id', name='unique_backing_per_user'),)
+
+class Group(Base):
+    __tablename__ = "groups"
+
+    group_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(120), nullable=False, unique=True)
+    description = Column(Text, nullable=False)
+    visibility = Column(Enum(GroupVisibility), nullable=False)
+    created_by = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    creator = relationship("User", back_populates="created_groups")
+    members = relationship("GroupMember", back_populates="group", cascade="all, delete-orphan")
+
+
+class GroupMember(Base):
+    __tablename__ = "group_members"
+
+    group_member_id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("groups.group_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    role = Column(Enum(GroupRole), nullable=False)
+    joined_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    group = relationship("Group", back_populates="members")
+    user = relationship("User", back_populates="memberships")
+
+    # Unique constraint
+    __table_args__ = (UniqueConstraint('group_id', 'user_id', name='unique_group_membership'),)

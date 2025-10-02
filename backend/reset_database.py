@@ -16,8 +16,7 @@ try:
     # Import all model classes
     from models import (
         User, Prediction, Vote, Backing, Group, GroupMember, 
-        GroupPrediction, GroupVote, GroupBacking,
-        LoginType, Visibility, GroupVisibility, GroupRole
+        LoginType, Visibility
     )
 except ImportError as e:
     print(f"Import error: {e}")

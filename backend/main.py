@@ -505,6 +505,44 @@ def get_prediction_receipt(
     )
 
 
+@app.post("/groups", response_model=GroupResponse, tags=["groups"], status_code=status.HTTP_201_CREATED)
+def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Create a new group.
+
+    - **name**: The name of the group (must be unique).
+    - **description**: A description for the group.
+    - **visibility**: The group's visibility ('public', 'private', or 'secret').
+    """
+    db_group = db.query(Group).filter(Group.name == group.name).first()
+    if db_group:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A group with this name already exists."
+        )
+
+    new_group = Group(
+        name=group.name,
+        description=group.description,
+        visibility=group.visibility,
+        created_by=current_user.user_id
+    )
+    db.add(new_group)
+    db.flush()
+
+    new_member = GroupMember(
+        group_id=new_group.group_id,
+        user_id=current_user.user_id,
+        role=GroupRole.OWNER
+    )
+    db.add(new_member)
+    
+    db.commit()
+    db.refresh(new_group)
+
+    return new_group
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

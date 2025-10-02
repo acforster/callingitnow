@@ -1,8 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime
-from models import LoginType, Visibility
-
+from models import LoginType, Visibility, GroupVisibility, GroupRole
 
 # User schemas
 class UserBase(BaseModel):
@@ -126,3 +125,22 @@ class PredictionReceipt(BaseModel):
 # Error schemas
 class ErrorResponse(BaseModel):
     detail: str
+
+# Group schemas
+class GroupBase(BaseModel):
+    name: str = Field(..., min_length=3, max_length=100)
+    description: str
+    visibility: GroupVisibility
+
+
+class GroupCreate(GroupBase):
+    pass
+
+
+class GroupResponse(GroupBase):
+    group_id: int
+    created_by: int  # Changed from 'creator'
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
