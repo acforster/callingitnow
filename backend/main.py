@@ -525,7 +525,7 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
     new_group = Group(
         name=group.name,
         description=group.description,
-        visibility=group.visibility.value,  # <-- Add .value here
+        visibility=group.visibility,  # REMOVE .value
         created_by=current_user.user_id
     )
     db.add(new_group)
@@ -546,7 +546,7 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
         group_id=new_group.group_id,
         name=new_group.name,
         description=new_group.description,
-        visibility=new_group.visibility.value, # <-- Add .value here
+        visibility=new_group.visibility
         creator=new_group.creator,
         created_at=new_group.created_at,
         member_count=1  # The creator is the first member

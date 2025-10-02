@@ -105,8 +105,7 @@ class Group(Base):
     group_id = Column(Integer, primary_key=True, index=True)
     name = Column(String(120), nullable=False, unique=True)
     description = Column(Text, nullable=False)
-    # The definitive fix is here:
-    visibility = Column(pgEnum(GroupVisibility, name="groupvisibility", create_type=False), nullable=False)
+    visibility = Column(Enum(GroupVisibility, native_enum=False), nullable=False)    
     created_by = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -121,7 +120,7 @@ class GroupMember(Base):
     group_member_id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, ForeignKey("groups.group_id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-    role = Column(Enum(GroupRole), nullable=False)
+    role = Column(Enum(GroupRole, native_enum=False), nullable=False)    
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
