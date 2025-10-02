@@ -32,6 +32,8 @@ export default function GroupDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [joinLoading, setJoinLoading] = useState(false); // 4. Add loading state for the button
+  const [leaveLoading, setLeaveLoading] = useState(false); // 1. Add loading state for leaving
+
 
   const fetchGroup = async () => {
     if (!groupId) return;
@@ -47,6 +49,7 @@ export default function GroupDetailPage() {
     }
   };
 
+ 
   useEffect(() => {
     fetchGroup();
   }, [groupId]);
@@ -62,6 +65,20 @@ export default function GroupDetailPage() {
       alert(err.response?.data?.detail || 'Failed to join group.');
     } finally {
       setJoinLoading(false);
+    }
+  };
+
+  // 6. Add handler for leaving the group
+  const handleLeave = async () => {
+    if (!groupId) return;
+    setLeaveLoading(true);
+    try {
+      await api.post(`/groups/${groupId}/leave`);
+      fetchGroup(); // Re-fetch group data to update member count and status
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to leave group.');
+    } finally {
+      setLeaveLoading(false);
     }
   };
 
@@ -100,11 +117,12 @@ export default function GroupDetailPage() {
             <div>
               {group.is_member ? (
                 <button
-                  disabled
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-400"
+                    onClick={handleLeave}
+                    disabled={leaveLoading}
+                    className="px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-200"
                 >
-                  Joined
-                </button>
+                {leaveLoading ? 'Leaving...' : 'Leave Group'}
+              </button>
               ) : (
                 <button
                   onClick={handleJoin}

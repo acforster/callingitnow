@@ -651,6 +651,35 @@ def join_group(group_id: int, db: Session = Depends(get_db), current_user: User 
 
     return MessageResponse(message="Successfully joined group.")
 
+@app.post("/groups/{group_id}/leave", response_model=MessageResponse, tags=["groups"])
+def leave_group(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Allows the current user to leave a group they are a member of.
+    """
+    # Find the membership record
+    member = db.query(GroupMember).filter(
+        GroupMember.group_id == group_id,
+        GroupMember.user_id == current_user.user_id
+    ).first()
+
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You are not a member of this group."
+        )
+    
+    # Prevent owner from leaving the group for now
+    if member.role == 'owner':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Group owners cannot leave the group. You must transfer ownership or delete the group."
+        )
+
+    db.delete(member)
+    db.commit()
+
+    return MessageResponse(message="You have successfully left the group.")
+
 
 if __name__ == "__main__":
     import uvicorn
