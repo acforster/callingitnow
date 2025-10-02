@@ -525,7 +525,7 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
     new_group = Group(
         name=group.name,
         description=group.description,
-        visibility=group.visibility,  # REMOVE .value
+        visibility=group.visibility.value,  
         created_by=current_user.user_id
     )
     db.add(new_group)
@@ -557,7 +557,7 @@ def get_groups(db: Session = Depends(get_db)):
     """
     Get a list of all public groups.
     """
-    groups_db = db.query(Group).filter(Group.visibility == GroupVisibility.PUBLIC).all()
+    groups_db = db.query(Group).filter(Group.visibility == GroupVisibility.PUBLIC.value).all()
     
     group_responses = []
     for group in groups_db:
