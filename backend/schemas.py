@@ -142,6 +142,7 @@ class GroupResponse(GroupBase):
     creator: UserResponse  # Changed from created_by
     created_at: datetime
     member_count: int
+    is_member: Optional[bool] = None 
 
     class Config:
         from_attributes = True

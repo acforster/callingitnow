@@ -597,7 +597,7 @@ def get_group(group_id: int, db: Session = Depends(get_db), current_user: Option
             GroupMember.user_id == current_user.user_id
         ).first() is not None
 
-    response = GroupResponse.from_orm(group)
+    response = GroupResponse.model_validate(group)
     response.member_count = member_count
     response.is_member = is_member
     return response
