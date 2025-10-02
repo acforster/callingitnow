@@ -104,7 +104,8 @@ class Group(Base):
     group_id = Column(Integer, primary_key=True, index=True)
     name = Column(String(120), nullable=False, unique=True)
     description = Column(Text, nullable=False)
-    visibility = Column(Enum(GroupVisibility, create_type=False), nullable=False)
+    # The definitive fix is here:
+    visibility = Column(pgEnum(GroupVisibility, name="groupvisibility", create_type=False), nullable=False)
     created_by = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

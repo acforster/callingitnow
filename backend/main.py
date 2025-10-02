@@ -17,6 +17,7 @@ from schemas import (
     PredictionCreate, PredictionResponse, PredictionListResponse, VoteRequest, VoteResponse,
     BackingResponse, PredictionReceipt, ErrorResponse, GroupCreate, GroupResponse, GroupListResponse
 )
+
 from auth import (
     get_password_hash, verify_password, create_access_token,
     get_current_user, get_current_user_optional
