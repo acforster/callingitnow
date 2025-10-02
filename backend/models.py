@@ -51,6 +51,7 @@ class Prediction(Base):
     
     prediction_id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    group_id = Column(Integer, ForeignKey("groups.group_id"), nullable=True)
     title = Column(String(120), nullable=False)
     content = Column(Text, nullable=False)
     category = Column(String(50), nullable=False)
@@ -64,7 +65,7 @@ class Prediction(Base):
     user = relationship("User", back_populates="predictions")
     votes = relationship("Vote", back_populates="prediction")
     backings = relationship("Backing", back_populates="prediction")
-
+    group = relationship("Group", back_populates="predictions")
 
 class Vote(Base):
     __tablename__ = "votes"
@@ -111,6 +112,7 @@ class Group(Base):
     # Relationships
     creator = relationship("User", back_populates="created_groups")
     members = relationship("GroupMember", back_populates="group", cascade="all, delete-orphan")
+    predictions = relationship("Prediction", back_populates="group")
 
 
 class GroupMember(Base):

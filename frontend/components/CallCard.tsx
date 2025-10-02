@@ -1,215 +1,159 @@
 'use client';
 
-import { useState } from 'react';
-import { Prediction as Call, predictionsAPI } from '@/lib/api';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import api, { Prediction as Call } from '@/lib/api';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/lib/auth';
-import {
-  HandThumbUpIcon,
-  HandThumbDownIcon,
-  HeartIcon,
-  ShareIcon,
-  EyeIcon,
-  EyeSlashIcon,
-} from '@heroicons/react/24/outline';
-import {
-  HandThumbUpIcon as HandThumbUpSolidIcon,
-  HandThumbDownIcon as HandThumbDownSolidIcon,
-  HeartIcon as HeartSolidIcon,
-} from '@heroicons/react/24/solid';
-import { timeAgo } from '@/lib/time';
+import CallCard from '@/components/CallCard';
 
-interface CallCardProps {
-  call: Call;
-  onUpdate?: () => void;
+// Define the Group types
+interface GroupCreator {
+  user_id: number;
+  handle: string;
 }
 
-export default function CallCard({ call, onUpdate }: CallCardProps) {
+interface Group {
+  group_id: number;
+  name: string;
+  description: string;
+  visibility: 'public' | 'private' | 'secret';
+  creator: GroupCreator;
+  created_at: string;
+  member_count: number;
+  is_member?: boolean;
+}
+
+export default function GroupDetailPage() {
+  const params = useParams();
+  const groupId = params.group_id as string;
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+
+  const [group, setGroup] = useState<Group | null>(null);
+  const [predictions, setPredictions] = useState<Call[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [leaveLoading, setLeaveLoading] = useState(false);
 
-  // Local state for immediate UI feedback
-  const [localVote, setLocalVote] = useState(call.user_vote);
-  const [voteScore, setVoteScore] = useState(call.vote_score);
-  const [localBacked, setLocalBacked] = useState(call.user_backed);
-  const [backingCount, setBackingCount] = useState(call.backing_count);
-
-  const handleVote = async (value: number) => {
-    if (!user || loading) return;
-
-    setLoading(true);
-    setError(null);
-
-    const originalVote = localVote;
-    const originalScore = voteScore;
-
-    // Optimistic UI update
-    let newVote = value;
-    if (originalVote === value) {
-      // User is undoing their vote
-      newVote = 0;
-      setVoteScore(originalScore - value);
-    } else {
-      // New vote or changing vote
-      setVoteScore(originalScore - (originalVote || 0) + value);
-    }
-    setLocalVote(newVote);
-
+  const fetchGroupAndPredictions = async () => {
+    if (!groupId) return;
     try {
-      await predictionsAPI.vote(call.prediction_id, newVote);
-      if (onUpdate) onUpdate();
+      setLoading(true);
+      const [groupRes, predictionsRes] = await Promise.all([
+        api.get(`/groups/${groupId}`),
+        api.get(`/groups/${groupId}/predictions`),
+      ]);
+      setGroup(groupRes.data);
+      setPredictions(predictionsRes.data.predictions);
+      setError(null);
     } catch (err) {
-      setError('Vote failed. Please try again.');
-      // Revert UI on failure
-      setLocalVote(originalVote);
-      setVoteScore(originalScore);
+      setError('Failed to load group details. It may not exist or you may not have permission to view it.');
+      setGroup(null);
+      setPredictions([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBack = async () => {
-    if (!user || loading || localBacked) return;
+  useEffect(() => {
+    if (groupId) {
+        fetchGroupAndPredictions();
+    }
+  }, [groupId]);
 
-    setLoading(true);
-    setError(null);
-
-    // Optimistic UI update
-    setLocalBacked(true);
-    setBackingCount(backingCount + 1);
-
+  const handleJoin = async () => {
+    if (!groupId) return;
+    setJoinLoading(true);
     try {
-      await predictionsAPI.back(call.prediction_id);
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      setError('Failed to back this call.');
-      // Revert UI on failure
-      setLocalBacked(false);
-      setBackingCount(backingCount - 1);
+      await api.post(`/groups/${groupId}/join`);
+      fetchGroupAndPredictions(); // Re-fetch all data
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to join group.');
     } finally {
-      setLoading(false);
+      setJoinLoading(false);
     }
   };
 
-  const handleShare = () => {
-    const shareUrl = `${window.location.origin}/predictions/${call.prediction_id}`;
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      // Maybe show a toast notification here
-      alert('Link copied to clipboard!');
-    });
+  const handleLeave = async () => {
+    if (!groupId) return;
+    setLeaveLoading(true);
+    try {
+      await api.post(`/groups/${groupId}/leave`);
+      fetchGroupAndPredictions(); // Re-fetch all data
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to leave group.');
+    } finally {
+      setLeaveLoading(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-4 flex justify-center items-center h-64">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (!group) {
+    return null; // Or a 'Group not found' message
+  }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-      {/* Card Header */}
-      <div className="flex justify-between items-start">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-            <span className="text-lg font-bold text-primary-600">
-              {call.user.handle.charAt(0).toUpperCase()}
-            </span>
-          </div>
+    <div className="container mx-auto p-4 max-w-4xl">
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex justify-between items-start">
           <div>
-            <p className="font-semibold text-gray-900">@{call.user.handle}</p>
-            <p className="text-xs text-gray-500">
-              Wisdom Level: {call.user.wisdom_level}
+            <h1 className="text-4xl font-bold mb-2">{group.name}</h1>
+            <p className="text-md text-gray-500 mb-4">
+              Created by @{group.creator.handle} &middot; {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
             </p>
           </div>
+          {user && (
+            <div>
+              {group.is_member ? (
+                <button
+                  onClick={handleLeave}
+                  disabled={leaveLoading}
+                  className="px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-200"
+                >
+                  {leaveLoading ? 'Leaving...' : 'Leave Group'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleJoin}
+                  disabled={joinLoading}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:bg-gray-400"
+                >
+                  {joinLoading ? 'Joining...' : 'Join Group'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
-        <div className="flex items-center space-x-2 text-xs text-gray-400">
-          {call.visibility === 'private' ? (
-            <EyeSlashIcon className="h-4 w-4" />
+        <p className="text-lg text-gray-700 mt-4">{group.description}</p>
+        <div className="mt-6 border-t pt-4">
+          <h2 className="text-2xl font-semibold mb-4">Calls in this Group</h2>
+          {predictions.length > 0 ? (
+            <div className="space-y-4">
+              {predictions.map((call) => (
+                <CallCard key={call.prediction_id} call={call} onUpdate={fetchGroupAndPredictions} />
+              ))}
+            </div>
           ) : (
-            <EyeIcon className="h-4 w-4" />
-          )}
-          <span>{timeAgo(call.timestamp)}</span>
-        </div>
-      </div>
-
-      {/* Card Body */}
-      <div className="space-y-2">
-        <h2 className="text-xl font-bold text-gray-800">{call.title}</h2>
-        <p className="text-gray-600 leading-relaxed">{call.content}</p>
-      </div>
-
-      {/* Card Footer */}
-      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-        <div className="flex items-center space-x-4">
-          {/* Voting */}
-          <div className="flex items-center space-x-1 bg-gray-50 rounded-lg p-1">
-            <button
-              onClick={() => handleVote(1)}
-              disabled={!user || loading}
-              className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition-colors ${
-                localVote === 1
-                  ? 'bg-green-100 text-green-700'
-                  : 'text-gray-500 hover:bg-gray-100 hover:text-green-600'
-              } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {localVote === 1 ? (
-                <HandThumbUpSolidIcon className="h-4 w-4" />
-              ) : (
-                <HandThumbUpIcon className="h-4 w-4" />
-              )}
-            </button>
-            
-            <span className={`font-medium ${voteScore > 0 ? 'text-green-600' : voteScore < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-              {voteScore > 0 ? '+' : ''}{voteScore}
-            </span>
-            
-            <button
-              onClick={() => handleVote(-1)}
-              disabled={!user || loading}
-              className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition-colors ${
-                localVote === -1
-                  ? 'bg-red-100 text-red-700'
-                  : 'text-gray-500 hover:bg-gray-100 hover:text-red-600'
-              } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {localVote === -1 ? (
-                <HandThumbDownSolidIcon className="h-4 w-4" />
-              ) : (
-                <HandThumbDownIcon className="h-4 w-4" />
-              )}
-            </button>
-          </div>
-
-          {/* Backing */}
-          {call.allow_backing && (
-            <button
-              onClick={handleBack}
-              disabled={!user || loading || localBacked}
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-colors ${
-                localBacked
-                  ? 'bg-red-100 text-red-700'
-                  : 'text-gray-500 hover:bg-gray-100 hover:text-red-600'
-              } ${!user || localBacked ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {localBacked ? (
-                <HeartSolidIcon className="h-4 w-4" />
-              ) : (
-                <HeartIcon className="h-4 w-4" />
-              )}
-              <span className="text-sm font-medium">
-                {localBacked ? 'Backed' : 'Back'} {backingCount > 0 && `(${backingCount})`}
-              </span>
-            </button>
+            <p className="text-gray-500 mt-2">No calls have been made in this group yet.</p>
           )}
         </div>
-
-        <div className="flex items-center space-x-2">
-          {/* Share */}
-          <button
-            onClick={handleShare}
-            className="text-gray-400 hover:text-primary-600 transition-colors p-2 rounded-lg"
-            title="Copy link to call"
-          >
-            <ShareIcon className="h-5 w-5" />
-          </button>
-        </div>
       </div>
-
-      {error && <p className="text-xs text-red-500 text-center mt-2">{error}</p>}
     </div>
   );
 }

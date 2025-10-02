@@ -58,12 +58,13 @@ class PredictionBase(BaseModel):
 
 
 class PredictionCreate(PredictionBase):
-    pass
+    passgroup_id: Optional[int] = None
 
 
 class PredictionResponse(PredictionBase):
     prediction_id: int
     user_id: int
+    group_id: Optional[int] = None
     timestamp: datetime
     hash: str
     user: UserResponse

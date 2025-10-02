@@ -183,6 +183,18 @@ def get_current_user_profile(current_user: User = Depends(get_current_user), db:
 @app.post("/predictions", response_model=PredictionResponse, status_code=status.HTTP_201_CREATED)
 def create_prediction(prediction_data: PredictionCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Create a new prediction."""
+    if prediction_data.group_id:
+        member = db.query(GroupMember).filter(
+            GroupMember.group_id == prediction_data.group_id,
+            GroupMember.user_id == current_user.user_id
+        ).first()
+        if not member:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this group."
+            )
+
+
     # Check for profanity but don't censor here
     has_profanity = profanity.contains_profanity(prediction_data.title) or profanity.contains_profanity(prediction_data.content)
 
@@ -200,6 +212,7 @@ def create_prediction(prediction_data: PredictionCreate, db: Session = Depends(g
 
     prediction = Prediction(
         user_id=current_user.user_id,
+        group_id=prediction_data.group_id,
         title=censored_title, # Store censored version
         content=censored_content, # Store censored version
         category=prediction_data.category,
@@ -610,6 +623,56 @@ def get_group(group_id: int, db: Session = Depends(get_db), current_user: Option
     }
     # Validate the complete dictionary
     return GroupResponse.model_validate(group_data)
+
+@app.get("/groups/{group_id}/predictions", response_model=PredictionListResponse, tags=["groups"])
+def get_group_predictions(
+    group_id: int,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """Get predictions for a specific group."""
+    # First, check if the group exists
+    group = db.query(Group).filter(Group.group_id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Basic visibility check (can be expanded later)
+    if group.visibility != 'public' and (not current_user or not db.query(GroupMember).filter(GroupMember.group_id == group_id, GroupMember.user_id == current_user.user_id).first()):
+         raise HTTPException(status_code=403, detail="You do not have permission to view this group's predictions.")
+
+    query = db.query(Prediction).filter(Prediction.group_id == group_id).order_by(desc(Prediction.timestamp))
+
+    total = query.count()
+    predictions_db = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    prediction_responses = []
+    for prediction in predictions_db:
+        prediction_responses.append(PredictionResponse(
+            prediction_id=prediction.prediction_id,
+            user_id=prediction.user_id,
+            group_id=prediction.group_id,
+            title=prediction.title,
+            content=prediction.content,
+            category=prediction.category,
+            visibility=prediction.visibility,
+            allow_backing=prediction.allow_backing,
+            timestamp=prediction.timestamp,
+            hash=prediction.hash,
+            user=prediction.user,
+            vote_score=calculate_vote_score(prediction.prediction_id, db),
+            backing_count=db.query(Backing).filter(Backing.prediction_id == prediction.prediction_id).count(),
+            user_vote=get_user_vote(prediction.prediction_id, current_user.user_id if current_user else None, db),
+            user_backed=get_user_backing(prediction.prediction_id, current_user.user_id if current_user else None, db)
+        ))
+
+    return PredictionListResponse(
+        predictions=prediction_responses,
+        total=total,
+        page=page,
+        per_page=per_page
+    )
 
 @app.post("/groups/{group_id}/join", response_model=MessageResponse, tags=["groups"])
 def join_group(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

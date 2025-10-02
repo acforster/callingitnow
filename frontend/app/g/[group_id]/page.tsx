@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import api from '@/lib/api';
+import api, { Prediction as Call } from '@/lib/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { useAuth } from '@/lib/auth'; // 1. Import useAuth
+import { useAuth } from '@/lib/auth';
+import CallCard from '@/components/CallCard';
+import CreateCallForm from '@/components/CreateCallForm';
 
-// Define the same Group types we used on the main groups page
+// Define the Group types
 interface GroupCreator {
   user_id: number;
   handle: string;
@@ -20,47 +22,55 @@ interface Group {
   creator: GroupCreator;
   created_at: string;
   member_count: number;
-  is_member?: boolean; // 2. Add is_member flag
+  is_member?: boolean;
 }
 
 export default function GroupDetailPage() {
   const params = useParams();
-  const groupId = params.group_id;
-  const { user } = useAuth(); // 3. Get user from auth context
+  const groupId = params.group_id as string;
+  const { user } = useAuth();
 
   const [group, setGroup] = useState<Group | null>(null);
+  const [predictions, setPredictions] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [joinLoading, setJoinLoading] = useState(false); // 4. Add loading state for the button
-  const [leaveLoading, setLeaveLoading] = useState(false); // 1. Add loading state for leaving
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [leaveLoading, setLeaveLoading] = useState(false);
 
-
-  const fetchGroup = async () => {
+  const fetchGroupAndPredictions = async () => {
     if (!groupId) return;
+    // Keep loading true if it's the initial load
+    if (!group) setLoading(true);
+
     try {
-      setLoading(true);
-      const response = await api.get(`/groups/${groupId}`);
-      setGroup(response.data);
+      const [groupRes, predictionsRes] = await Promise.all([
+        api.get(`/groups/${groupId}`),
+        api.get(`/groups/${groupId}/predictions`),
+      ]);
+      setGroup(groupRes.data);
+      setPredictions(predictionsRes.data.predictions);
       setError(null);
     } catch (err) {
       setError('Failed to load group details. It may not exist or you may not have permission to view it.');
+      setGroup(null);
+      setPredictions([]);
     } finally {
       setLoading(false);
     }
   };
 
- 
   useEffect(() => {
-    fetchGroup();
+    if (groupId) {
+      fetchGroupAndPredictions();
+    }
   }, [groupId]);
 
-  // 5. Add handler for joining the group
   const handleJoin = async () => {
     if (!groupId) return;
     setJoinLoading(true);
     try {
       await api.post(`/groups/${groupId}/join`);
-      fetchGroup(); // Re-fetch group data to update member count and status
+      fetchGroupAndPredictions(); // Re-fetch all data
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to join group.');
     } finally {
@@ -68,13 +78,12 @@ export default function GroupDetailPage() {
     }
   };
 
-  // 6. Add handler for leaving the group
   const handleLeave = async () => {
     if (!groupId) return;
     setLeaveLoading(true);
     try {
       await api.post(`/groups/${groupId}/leave`);
-      fetchGroup(); // Re-fetch group data to update member count and status
+      fetchGroupAndPredictions(); // Re-fetch all data
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to leave group.');
     } finally {
@@ -99,7 +108,7 @@ export default function GroupDetailPage() {
   }
 
   if (!group) {
-    return null;
+    return null; // Or a 'Group not found' message
   }
 
   return (
@@ -112,17 +121,16 @@ export default function GroupDetailPage() {
               Created by @{group.creator.handle} &middot; {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
             </p>
           </div>
-          {/* 6. Add the Join/Joined button */}
           {user && (
             <div>
               {group.is_member ? (
                 <button
-                    onClick={handleLeave}
-                    disabled={leaveLoading}
-                    className="px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-200"
+                  onClick={handleLeave}
+                  disabled={leaveLoading}
+                  className="px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-200"
                 >
-                {leaveLoading ? 'Leaving...' : 'Leave Group'}
-              </button>
+                  {leaveLoading ? 'Leaving...' : 'Leave Group'}
+                </button>
               ) : (
                 <button
                   onClick={handleJoin}
@@ -136,9 +144,25 @@ export default function GroupDetailPage() {
           )}
         </div>
         <p className="text-lg text-gray-700 mt-4">{group.description}</p>
+
+        {/* Add the form for members */}
+        {group.is_member && (
+          <div className="mt-6">
+            <CreateCallForm groupId={groupId} onCallCreated={fetchGroupAndPredictions} />
+          </div>
+        )}
+
         <div className="mt-6 border-t pt-4">
-          <h2 className="text-2xl font-semibold">Calls in this Group</h2>
-          <p className="text-gray-500 mt-2">Coming soon...</p>
+          <h2 className="text-2xl font-semibold mb-4">Calls in this Group</h2>
+          {predictions.length > 0 ? (
+            <div className="space-y-4">
+              {predictions.map((call) => (
+                <CallCard key={call.prediction_id} call={call} onUpdate={fetchGroupAndPredictions} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 mt-2">No calls have been made in this group yet.</p>
+          )}
         </div>
       </div>
     </div>
