@@ -11,7 +11,7 @@ from datetime import datetime
 from profanity_list import custom_bad_words
 from config import settings
 from database import get_db, engine, Base
-from models import User, Prediction, Vote, Backing, Group, GroupMember, LoginType, Visibility, GroupRole
+from models import User, Prediction, Vote, Backing, Group, GroupMember, LoginType, Visibility, GroupRole, GroupVisibility
 from schemas import (
     UserCreate, UserResponse, UserProfile, Token, LoginRequest, GoogleAuthRequest,
     PredictionCreate, PredictionResponse, PredictionListResponse, VoteRequest, VoteResponse,
