@@ -139,8 +139,13 @@ class GroupCreate(GroupBase):
 
 class GroupResponse(GroupBase):
     group_id: int
-    created_by: int  # Changed from 'creator'
+    creator: UserResponse  # Changed from created_by
     created_at: datetime
+    member_count: int
 
     class Config:
         from_attributes = True
+
+
+class GroupListResponse(BaseModel):
+    groups: List[GroupResponse]

@@ -15,7 +15,7 @@ from models import User, Prediction, Vote, Backing, LoginType, Visibility
 from schemas import (
     UserCreate, UserResponse, UserProfile, Token, LoginRequest, GoogleAuthRequest,
     PredictionCreate, PredictionResponse, PredictionListResponse, VoteRequest, VoteResponse,
-    BackingResponse, PredictionReceipt, ErrorResponse
+    BackingResponse, PredictionReceipt, ErrorResponse, GroupCreate, GroupResponse, GroupListResponse
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
@@ -540,7 +540,40 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
     db.commit()
     db.refresh(new_group)
 
-    return new_group
+    #... inside create_group, at the end
+    return GroupResponse(
+        group_id=new_group.group_id,
+        name=new_group.name,
+        description=new_group.description,
+        visibility=new_group.visibility,
+        creator=new_group.creator,
+        created_at=new_group.created_at,
+        member_count=1  # The creator is the first member
+    )
+
+@app.get("/groups", response_model=GroupListResponse, tags=["groups"])
+def get_groups(db: Session = Depends(get_db)):
+    """
+    Get a list of all public groups.
+    """
+    groups_db = db.query(Group).filter(Group.visibility == GroupVisibility.PUBLIC).all()
+    
+    group_responses = []
+    for group in groups_db:
+        member_count = db.query(GroupMember).filter(GroupMember.group_id == group.group_id).count()
+        group_responses.append(
+            GroupResponse(
+                group_id=group.group_id,
+                name=group.name,
+                description=group.description,
+                visibility=group.visibility,
+                creator=group.creator,
+                created_at=group.created_at,
+                member_count=member_count
+            )
+        )
+        
+    return GroupListResponse(groups=group_responses)
 
 
 if __name__ == "__main__":
