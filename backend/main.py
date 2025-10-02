@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, asc
+from sqlalchemy import text # Make sure 'text' is imported from sqlalchemy at the top
 from typing import Optional, List
 import hashlib
 import json
