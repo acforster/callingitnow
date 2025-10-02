@@ -119,7 +119,7 @@ class GroupMember(Base):
     group_member_id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, ForeignKey("groups.group_id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-    role = Column(Enum(GroupRole, native_enum=False), nullable=False)    
+    role = Column(String(255), nullable=False) 
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
