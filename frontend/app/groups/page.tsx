@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useAuth } from '@/lib/auth';
 import api from '@/lib/api';
+import Link from 'next/link';
 
 // Define the Group type to match our API response
 interface GroupCreator {
@@ -155,14 +156,16 @@ export default function GroupsPage() {
             <div className="space-y-4">
               {groups.length > 0 ? (
                 groups.map((group) => (
-                  <div key={group.group_id} className="bg-white p-4 rounded-lg shadow-md">
-                    <h3 className="text-xl font-bold text-primary-700">{group.name}</h3>
-                    <p className="text-sm text-gray-500 mb-2">Created by @{group.creator.handle}</p>
-                    <p className="text-gray-700">{group.description}</p>
-                    <div className="mt-3 text-sm text-gray-600">
-                      <span>{group.member_count} {group.member_count === 1 ? 'member' : 'members'}</span>
+                    <Link key={group.group_id} href={`/g/${group.group_id}`}>
+                    <div key={group.group_id} className="bg-white p-4 rounded-lg shadow-md">
+                            <h3 className="text-xl font-bold text-primary-700">{group.name}</h3>
+                            <p className="text-sm text-gray-500 mb-2">Created by @{group.creator.handle}</p>
+                            <p className="text-gray-700">{group.description}</p>
+                            <div className="mt-3 text-sm text-gray-600">
+                            <span>{group.member_count} {group.member_count === 1 ? 'member' : 'members'}</span>
+                        </div>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <p>No public groups found. Why not create the first one?</p>

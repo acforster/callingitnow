@@ -574,6 +574,30 @@ def get_groups(db: Session = Depends(get_db)):
         
     return GroupListResponse(groups=group_responses)
 
+@app.get("/groups/{group_id}", response_model=GroupResponse, tags=["groups"])
+def get_group(group_id: int, db: Session = Depends(get_db)):
+    """
+    Get details for a single group by its ID.
+    """
+    group = db.query(Group).filter(Group.group_id == group_id).first()
+    if not group:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Group not found."
+        )
+
+    member_count = db.query(GroupMember).filter(GroupMember.group_id == group.group_id).count()
+
+    return GroupResponse(
+        group_id=group.group_id,
+        name=group.name,
+        description=group.description,
+        visibility=group.visibility,
+        creator=group.creator,
+        created_at=group.created_at,
+        member_count=member_count
+    )
+
 
 if __name__ == "__main__":
     import uvicorn
