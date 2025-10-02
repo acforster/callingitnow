@@ -597,16 +597,10 @@ def get_group(group_id: int, db: Session = Depends(get_db), current_user: Option
             GroupMember.user_id == current_user.user_id
         ).first() is not None
 
-    return GroupResponse(
-        group_id=group.group_id,
-        name=group.name,
-        description=group.description,
-        visibility=group.visibility,
-        creator=group.creator,
-        created_at=group.created_at,
-        member_count=member_count,
-        is_member=is_member
-    )
+    response = GroupResponse.from_orm(group)
+    response.member_count = member_count
+    response.is_member = is_member
+    return response
 
 @app.post("/groups/{group_id}/join", response_model=MessageResponse, tags=["groups"])
 def join_group(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
