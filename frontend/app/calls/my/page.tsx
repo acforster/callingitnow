@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { predictionsAPI, Prediction } from '@/lib/api';
 import CallCard from '@/components/CallCard';
 import Link from 'next/link';
+import LoadingSpinner from '@/components/LoadingSpinner'; // Import LoadingSpinner
 
 export default function MyCallsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -18,7 +19,8 @@ export default function MyCallsPage() {
     if (!user) return;
     try {
       setLoading(true);
-      const response = await predictionsAPI.list({ user_id: user.user_id });
+      // The API endpoint for "my" predictions doesn't need a user_id passed
+      const response = await predictionsAPI.listMy(); 
       setPredictions(response.predictions);
       setError(null);
     } catch (err: any) {
@@ -39,7 +41,7 @@ export default function MyCallsPage() {
   if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="text-lg font-semibold text-gray-600">Loading your calls...</div>
+        <LoadingSpinner />
       </div>
     );
   }
