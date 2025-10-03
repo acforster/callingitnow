@@ -17,7 +17,7 @@ export default function PredictionPage() {
       const fetchPrediction = async () => {
         try {
           setLoading(true);
-          const data = await predictionsAPI.getById(parseInt(id, 10));
+          const data = await predictionsAPI.get(parseInt(id, 10)); // Changed from getById to get
           setPrediction(data);
         } catch (err) {
           setError('Failed to load prediction. It may be private or may not exist.');

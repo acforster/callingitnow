@@ -64,6 +64,15 @@ export interface Prediction {
   user_backed: boolean;
 }
 
+export interface ListPredictionsParams {
+  category?: string;
+  sort?: 'recent' | 'popular' | 'controversial';
+  page?: number;
+  per_page?: number;
+  user_id?: number;
+  safe_search?: boolean;
+}
+
 export interface PredictionListResponse {
   predictions: Prediction[];
   total: number;
