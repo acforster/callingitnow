@@ -1,19 +1,20 @@
 from pydantic_settings import BaseSettings
 from typing import List
-
+import os
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/callingitnow"
+    # This will now prioritize the DATABASE_URL environment variable
+    database_url: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/callingitnow")
     
     # JWT
-    jwt_secret: str = "2703b54195a6521f1362e3e633ab89a3"
+    jwt_secret: str
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 30
     
     # Google OAuth
-    google_oauth_client_id: str = ""
-    google_oauth_client_secret: str = ""
+    google_oauth_client_id: str
+    google_oauth_client_secret: str
     
     # API Configuration
     allowed_origins: str = "http://localhost:3000"
@@ -21,16 +22,17 @@ class Settings(BaseSettings):
     content_filter_level: str = "PG13"
     
     # Development
-    debug: bool = True
+    debug: bool = False
     log_level: str = "info"
     
     class Config:
         env_file = ".env"
         case_sensitive = False
+        # Allow extra fields to be ignored if they are not defined in the model
+        extra = 'ignore'
     
     @property
     def allowed_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.allowed_origins.split(",")]
-    
 
 settings = Settings()
