@@ -58,7 +58,7 @@ class PredictionBase(BaseModel):
 
 
 class PredictionCreate(PredictionBase):
-    passgroup_id: Optional[int] = None
+    group_id: Optional[int] = None
 
 
 class PredictionResponse(PredictionBase):
