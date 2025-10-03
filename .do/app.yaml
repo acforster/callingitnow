@@ -21,9 +21,7 @@ services:
   github:
     repo: acforster/callingitnow
     branch: main
-  build_command: |-
-    pip install -r requirements.txt
-    alembic upgrade head
+  build_command: pip install -r requirements.txt
   run_command: python -m gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080
   environment_slug: python
   instance_count: 1
@@ -54,6 +52,21 @@ services:
     value: "false"
   - key: LOG_LEVEL
     value: info
+
+# Add this new Job component for database migrations
+jobs:
+- name: migrate
+  kind: PRE_DEPLOY
+  source_dir: backend
+  github:
+    repo: acforster/callingitnow
+    branch: main
+  build_command: pip install -r requirements.txt
+  run_command: alembic upgrade head
+  environment_slug: python
+  envs:
+  - key: DATABASE_URL
+    value: ${db.DATABASE_URL}
 
 databases:
 - name: db
