@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 import os
 
 class Settings(BaseSettings):
@@ -12,9 +12,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 30
     
-    # Google OAuth
-    google_oauth_client_id: str
-    google_oauth_client_secret: str
+    # Google OAuth (now optional)
+    google_oauth_client_id: Optional[str] = None
+    google_oauth_client_secret: Optional[str] = None
     
     # API Configuration
     allowed_origins: str = "http://localhost:3000"
@@ -28,7 +28,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
-        # Allow extra fields to be ignored if they are not defined in the model
         extra = 'ignore'
     
     @property
