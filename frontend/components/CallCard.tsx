@@ -99,8 +99,7 @@ const CallCard: React.FC<CallCardProps> = ({ call, onUpdate }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-      {/* Card Header */}
+    <div className="bg-brand-background rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">      {/* Card Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">

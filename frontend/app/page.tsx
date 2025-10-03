@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { predictionsAPI, Prediction } from '@/lib/api';
 import CallCard from '@/components/CallCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import LeftSidebar from '@/components/LeftSidebar';
+import RightSidebar from '@/components/RightSidebar';
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'recent' | 'popular'>('popular');
@@ -42,34 +44,42 @@ export default function HomePage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-center border-b border-gray-200">
-        <div className="flex space-x-2">
-          <Tab tabName="popular" title="Popular Calls" />
-          <Tab tabName="recent" title="Recent Calls" />
+    <>
+      <LeftSidebar />
+
+      <div className="col-span-12 lg:col-span-6 order-2 lg:order-2">
+        <div className="space-y-6">
+          <div className="bg-brand-background rounded-lg shadow-sm p-2">
+            <div className="flex space-x-2">
+              <Tab tabName="popular" title="Popular Calls" />
+              <Tab tabName="recent" title="Recent Calls" />
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 text-red-600 bg-brand-background rounded-lg shadow-sm p-4">
+              <p>{error}</p>
+            </div>
+          ) : predictions.length > 0 ? (
+            <div className="space-y-4">
+              {predictions.map((prediction) => (
+                <CallCard key={prediction.prediction_id} call={prediction} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-brand-background rounded-lg shadow-sm p-4">
+              <h3 className="text-lg font-medium text-gray-900">No calls found.</h3>
+              <p className="text-gray-500">Be the first to make one!</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
-        </div>
-      ) : error ? (
-        <div className="text-center py-12 text-red-600">
-          <p>{error}</p>
-        </div>
-      ) : predictions.length > 0 ? (
-        <div className="space-y-6">
-          {predictions.map((prediction) => (
-            <CallCard key={prediction.prediction_id} call={prediction} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-gray-900">No calls found.</h3>
-          <p className="text-gray-500">Be the first to make one!</p>
-        </div>
-      )}
-    </div>
+      <RightSidebar />
+    </>
   );
 }

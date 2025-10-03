@@ -15,13 +15,16 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-gray-100`}>
         <AuthProvider>
           <SettingsProvider>
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen">
               <Navigation />
               <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {children}
+                {/* The grid container for the three-column layout */}
+                <div className="grid grid-cols-12 gap-8">
+                  {children}
+                </div>
               </main>
             </div>
           </SettingsProvider>

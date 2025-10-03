@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import api, { Prediction as Call } from '@/lib/api';
+import api, { Prediction as Call, User } from '@/lib/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/lib/auth';
 import CallCard from '@/components/CallCard';
 import CreateCallForm from '@/components/CreateCallForm';
+import LeftSidebar from '@/components/LeftSidebar';
+import RightSidebar from '@/components/RightSidebar';
 
 // Define the Group types
 interface GroupCreator {
@@ -39,7 +41,6 @@ export default function GroupDetailPage() {
 
   const fetchGroupAndPredictions = async () => {
     if (!groupId) return;
-    // Keep loading true if it's the initial load
     if (!group) setLoading(true);
 
     try {
@@ -70,7 +71,7 @@ export default function GroupDetailPage() {
     setJoinLoading(true);
     try {
       await api.post(`/groups/${groupId}/join`);
-      fetchGroupAndPredictions(); // Re-fetch all data
+      fetchGroupAndPredictions();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to join group.');
     } finally {
@@ -83,7 +84,7 @@ export default function GroupDetailPage() {
     setLeaveLoading(true);
     try {
       await api.post(`/groups/${groupId}/leave`);
-      fetchGroupAndPredictions(); // Re-fetch all data
+      fetchGroupAndPredictions();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to leave group.');
     } finally {
@@ -91,43 +92,70 @@ export default function GroupDetailPage() {
     }
   };
 
-  if (loading) {
+  const renderMainContent = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center py-12">
+          <LoadingSpinner />
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="text-center py-12 text-red-600 bg-white rounded-lg shadow-sm p-4">
+          <p>{error}</p>
+        </div>
+      );
+    }
+    
+    if (!group) {
+        return (
+            <div className="text-center py-12 text-red-600 bg-white rounded-lg shadow-sm p-4">
+              <p>Group not found.</p>
+            </div>
+          );
+    }
+
     return (
-      <div className="container mx-auto p-4 flex justify-center items-center h-64">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-4 text-center">
-        <p className="text-red-600">{error}</p>
-      </div>
-    );
-  }
-
-  if (!group) {
-    return null; // Or a 'Group not found' message
-  }
-
-  return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">{group.name}</h1>
-            <p className="text-md text-gray-500 mb-4">
-              Created by @{group.creator.handle} &middot; {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
-            </p>
+      <div className="space-y-4">
+        <div className="bg-white rounded-lg shadow-sm p-4">
+            <h1 className="text-2xl font-bold">{group.name}</h1>
+        </div>
+        {predictions.length > 0 ? (
+          predictions.map((call) => (
+            <CallCard key={call.prediction_id} call={call} onUpdate={fetchGroupAndPredictions} />
+          ))
+        ) : (
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm p-4">
+            <p className="text-gray-500">No calls have been made in this group yet.</p>
           </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderRightSidebar = () => {
+    if (!group) return null;
+
+    return (
+      <>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <h2 className="text-lg font-semibold">{group.name}</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Created by @{group.creator.handle}
+          </p>
+          <p className="text-sm text-gray-500">
+            {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
+          </p>
+          <p className="mt-4 text-gray-700">{group.description}</p>
           {user && (
-            <div>
+            <div className="mt-4">
               {group.is_member ? (
                 <button
                   onClick={handleLeave}
                   disabled={leaveLoading}
-                  className="px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-200"
+                  className="w-full px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 disabled:bg-gray-200"
                 >
                   {leaveLoading ? 'Leaving...' : 'Leave Group'}
                 </button>
@@ -135,7 +163,7 @@ export default function GroupDetailPage() {
                 <button
                   onClick={handleJoin}
                   disabled={joinLoading}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:bg-gray-400"
+                  className="w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400"
                 >
                   {joinLoading ? 'Joining...' : 'Join Group'}
                 </button>
@@ -143,28 +171,22 @@ export default function GroupDetailPage() {
             </div>
           )}
         </div>
-        <p className="text-lg text-gray-700 mt-4">{group.description}</p>
-
-        {/* Add the form for members */}
         {group.is_member && (
-          <div className="mt-6">
-            <CreateCallForm groupId={groupId} onCallCreated={fetchGroupAndPredictions} />
-          </div>
+          <CreateCallForm groupId={groupId} onCallCreated={fetchGroupAndPredictions} />
         )}
+      </>
+    );
+  };
 
-        <div className="mt-6 border-t pt-4">
-          <h2 className="text-2xl font-semibold mb-4">Calls in this Group</h2>
-          {predictions.length > 0 ? (
-            <div className="space-y-4">
-              {predictions.map((call) => (
-                <CallCard key={call.prediction_id} call={call} onUpdate={fetchGroupAndPredictions} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 mt-2">No calls have been made in this group yet.</p>
-          )}
-        </div>
+  return (
+    <>
+      <LeftSidebar />
+      <div className="col-span-12 lg:col-span-6 order-2 lg:order-2">
+        {renderMainContent()}
       </div>
-    </div>
+      <RightSidebar>
+        {renderRightSidebar()}
+      </RightSidebar>
+    </>
   );
 }

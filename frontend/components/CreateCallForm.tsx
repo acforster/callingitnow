@@ -43,8 +43,7 @@ export default function CreateCallForm({ groupId, onCallCreated }: CreateCallFor
   };
 
   return (
-    <div className="bg-gray-50 p-4 rounded-lg border mb-6">
-      <h3 className="text-lg font-semibold mb-3">Make a New Call in this Group</h3>
+    <div className="bg-brand-background p-4 rounded-lg border mb-6">      <h3 className="text-lg font-semibold mb-3">Make a New Call in this Group</h3>
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
           <label htmlFor="call-title" className="sr-only">Title</label>

@@ -1,7 +1,8 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/react/24/outline';
@@ -13,21 +14,37 @@ function classNames(...classes: string[]) {
 
 export default function Navigation() {
   const { user, logout, loading } = useAuth();
+  const [characterImage, setCharacterImage] = useState('');
+
+  useEffect(() => {
+    const charCount = 6;
+    const randomChar = Math.floor(Math.random() * charCount) + 1;
+    setCharacterImage(`/char-${randomChar}.png`);
+  }, []);
 
   const navigation = [
     { name: 'Home', href: '/', current: true },
-    //{ name: 'Leaderboard', href: '/leaderboard', current: false },
     { name: 'Groups', href: '/groups', current: false },
   ];
 
   return (
-    <Disclosure as="nav" className="bg-white shadow">
+    <Disclosure as="nav" className="bg-brand-background shadow">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex">
                 <div className="flex-shrink-0 flex items-center">
+                  {characterImage && (
+                    <Image
+                      src={characterImage}
+                      alt="CallingItNow Character"
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 mr-3"
+                      unoptimized // Add this if your images are not hosted on a CDN
+                    />
+                  )}
                   <Link href="/" className="text-2xl font-bold text-primary-600">
                     CallingItNow
                   </Link>
@@ -58,10 +75,9 @@ export default function Navigation() {
                           Make a Call
                         </Link>
                         
-                        {/* Profile dropdown */}
                         <Menu as="div" className="relative">
                           <div>
-                            <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                            <Menu.Button className="flex rounded-full bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                               <span className="sr-only">Open user menu</span>
                               <div className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50">
                                 <UserCircleIcon className="h-6 w-6 text-gray-400" />
@@ -141,7 +157,6 @@ export default function Navigation() {
                 )}
               </div>
               
-              {/* Mobile menu button */}
               <div className="sm:hidden flex items-center">
                 <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500">
                   <span className="sr-only">Open main menu</span>
@@ -155,7 +170,6 @@ export default function Navigation() {
             </div>
           </div>
 
-          {/* Mobile menu */}
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 pb-3 pt-2">
               {navigation.map((item) => (
