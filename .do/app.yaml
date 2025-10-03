@@ -54,6 +54,9 @@ services:
     value: info
 
 # Add this new Job component for database migrations
+# ... (services section remains the same) ...
+
+# Add this new Job component for database migrations
 jobs:
 - name: migrate
   kind: PRE_DEPLOY
@@ -67,6 +70,27 @@ jobs:
   envs:
   - key: DATABASE_URL
     value: ${db.DATABASE_URL}
+  - key: JWT_SECRET
+    value: ${JWT_SECRET}
+  - key: JWT_ALGORITHM
+    value: HS256
+  - key: JWT_EXPIRE_MINUTES
+    value: "30"
+  - key: GOOGLE_OAUTH_CLIENT_ID
+    value: ${GOOGLE_OAUTH_CLIENT_ID}
+  - key: GOOGLE_OAUTH_CLIENT_SECRET
+    value: ${GOOGLE_OAUTH_CLIENT_SECRET}
+  - key: ALLOWED_ORIGINS
+    value: "http://localhost:3000" # Placeholder, not used by migration
+  - key: RATE_LIMIT_PER_MINUTE
+    value: "60"
+  - key: CONTENT_FILTER_LEVEL
+    value: "PG13"
+  - key: DEBUG
+    value: "false"
+  - key: LOG_LEVEL
+    value: "info"
+
 
 databases:
 - name: db
