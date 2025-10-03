@@ -131,22 +131,25 @@ export const predictionsAPI = {
     return response.data;
   },
 
-  list: async (params?: {
-    category?: string;
-    sort?: 'recent' | 'popular' | 'controversial';
-    page?: number;
-    per_page?: number;
-    user_id?: number;
-    safe_search?: boolean;
-  }): Promise<PredictionListResponse> => {
-    const endpoint = params?.user_id ? '/predictions/my' : '/predictions';
-    const response = await api.get(endpoint, { params });
-    return response.data;
+  /**
+   * Fetches a list of predictions. Supports filtering and pagination.
+   */
+  list: (params?: ListPredictionsParams): Promise<PredictionListResponse> => {
+    return api.get('/predictions', { params }).then(res => res.data);
   },
 
-  getById: async (id: number): Promise<Prediction> => {
-    const response = await api.get(`/predictions/${id}`);
-    return response.data;
+  /**
+   * Fetches the predictions for the currently authenticated user.
+   */
+  listMy: (): Promise<PredictionListResponse> => {
+    return api.get('/predictions/my').then(res => res.data);
+  },
+
+  /**
+   * Fetches a single prediction by its ID.
+   */
+  get: (id: number): Promise<Prediction> => {
+    return api.get(`/predictions/${id}`).then(res => res.data);
   },
 
   vote: async (id: number, value: number): Promise<void> => {
