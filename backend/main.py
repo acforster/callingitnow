@@ -8,7 +8,7 @@ from typing import Optional, List
 import hashlib
 import json
 from better_profanity import profanity
-from datetime import datetime
+from datetime import datetime, timedelta
 from profanity_list import custom_bad_words
 from config import settings
 from database import get_db, engine, Base
@@ -565,11 +565,29 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
 
 
 @app.get("/groups", response_model=GroupListResponse, tags=["groups"])
-def get_groups(db: Session = Depends(get_db)):
+def get_groups(sort: Optional[str] = Query(None, regex="^(popular|top)$"), db: Session = Depends(get_db)):
     """
-    Get a list of all public groups.
+    Get a list of all public groups, with sorting options.
+    - `popular`: Groups with the most new predictions in the last 24 hours.
+    - `top`: Groups with the most predictions of all time.
     """
-    groups_db = db.query(Group).filter(Group.visibility == GroupVisibility.PUBLIC.value).all()
+    query = db.query(Group).filter(Group.visibility == GroupVisibility.PUBLIC.value)
+
+    if sort == "top":
+        query = query.outerjoin(Prediction, Group.group_id == Prediction.group_id)\
+                     .group_by(Group.group_id)\
+                     .order_by(desc(func.count(Prediction.prediction_id)))
+    elif sort == "popular":
+        one_day_ago = datetime.utcnow() - timedelta(days=1)
+        query = query.outerjoin(Prediction, Group.group_id == Prediction.group_id)\
+                     .filter(Prediction.timestamp >= one_day_ago)\
+                     .group_by(Group.group_id)\
+                     .order_by(desc(func.count(Prediction.prediction_id)))
+    else:
+        # Default sort by most recent
+        query = query.order_by(desc(Group.created_at))
+
+    groups_db = query.all()
     
     group_responses = []
     for group in groups_db:
@@ -583,6 +601,31 @@ def get_groups(db: Session = Depends(get_db)):
                 creator=group.creator,
                 created_at=group.created_at,
                 member_count=member_count
+            )
+        )
+        
+    return GroupListResponse(groups=group_responses)
+
+@app.get("/groups/me", response_model=GroupListResponse, tags=["groups"])
+def get_my_groups(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Get a list of all groups the current user is a member of.
+    """
+    groups_db = db.query(Group).join(GroupMember).filter(GroupMember.user_id == current_user.user_id).order_by(Group.name).all()
+
+    group_responses = []
+    for group in groups_db:
+        member_count = db.query(GroupMember).filter(GroupMember.group_id == group.group_id).count()
+        group_responses.append(
+            GroupResponse(
+                group_id=group.group_id,
+                name=group.name,
+                description=group.description,
+                visibility=group.visibility,
+                creator=group.creator,
+                created_at=group.created_at,
+                member_count=member_count,
+                is_member=True # User is always a member in this query
             )
         )
         
