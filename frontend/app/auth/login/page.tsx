@@ -72,7 +72,7 @@ export default function LoginPage() {
               })}
               type="email"
               autoComplete="email"
-              className="input"
+              className="input-field"
             />
           </div>
           {errors.email && (
@@ -89,7 +89,7 @@ export default function LoginPage() {
               {...register('password', { required: 'Password is required' })}
               type="password"
               autoComplete="current-password"
-              className="input"
+              className="input-field"
             />
           </div>
           {errors.password && (
