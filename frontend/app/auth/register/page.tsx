@@ -75,7 +75,7 @@ export default function RegisterPage() {
               })}
               type="email"
               autoComplete="email"
-              className="input-field"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
             />
           </div>
           {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
@@ -91,7 +91,7 @@ export default function RegisterPage() {
                 pattern: { value: /^[a-zA-Z0-9_]+$/, message: 'Handle can only contain letters, numbers, and underscores' },
               })}
               type="text"
-              className="input-field"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
             />
           </div>
           {errors.handle && <p className="mt-1 text-sm text-red-600">{errors.handle.message}</p>}
@@ -107,7 +107,7 @@ export default function RegisterPage() {
               })}
               type="password"
               autoComplete="new-password"
-              className="input-field"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
             />
           </div>
           {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
@@ -123,7 +123,7 @@ export default function RegisterPage() {
               })}
               type="password"
               autoComplete="new-password"
-              className="input-field"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
             />
           </div>
           {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
