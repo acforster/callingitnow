@@ -11,7 +11,9 @@ services:
   instance_count: 1
   instance_size_slug: basic-xxs
   routes:
+  - path: /_next
   - path: /
+    preserve_path_prefix: true
   envs:
   - key: NODE_ENV
     value: production
