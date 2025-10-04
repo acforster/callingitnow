@@ -103,7 +103,7 @@ export default function GroupDetailPage() {
 
     if (error) {
       return (
-        <div className="text-center py-12 text-red-600 bg-white rounded-lg shadow-sm p-4">
+        <div className="text-center py-12 text-red-600 bg-brand-background rounded-lg shadow-sm p-4">
           <p>{error}</p>
         </div>
       );
@@ -111,7 +111,7 @@ export default function GroupDetailPage() {
     
     if (!group) {
         return (
-            <div className="text-center py-12 text-red-600 bg-white rounded-lg shadow-sm p-4">
+            <div className="text-center py-12 text-red-600 bg-brand-background rounded-lg shadow-sm p-4">
               <p>Group not found.</p>
             </div>
           );
@@ -119,7 +119,7 @@ export default function GroupDetailPage() {
 
     return (
       <div className="space-y-4">
-        <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="bg-brand-background rounded-lg shadow-sm p-4">
             <h1 className="text-2xl font-bold">{group.name}</h1>
         </div>
         {predictions.length > 0 ? (
@@ -127,7 +127,7 @@ export default function GroupDetailPage() {
             <CallCard key={call.prediction_id} call={call} onUpdate={fetchGroupAndPredictions} />
           ))
         ) : (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm p-4">
+          <div className="text-center py-12 bg-brand-background rounded-lg shadow-sm p-4">
             <p className="text-gray-500">No calls have been made in this group yet.</p>
           </div>
         )}
@@ -140,7 +140,7 @@ export default function GroupDetailPage() {
 
     return (
       <>
-        <div className="bg-white p-4 rounded-lg shadow-sm">
+        <div className="bg-brand-background p-4 rounded-lg shadow-sm">
           <h2 className="text-lg font-semibold">{group.name}</h2>
           <p className="text-sm text-gray-500 mt-1">
             Created by @{group.creator.handle}
@@ -155,7 +155,7 @@ export default function GroupDetailPage() {
                 <button
                   onClick={handleLeave}
                   disabled={leaveLoading}
-                  className="w-full px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 disabled:bg-gray-200"
+                  className="w-full px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-brand-background hover:bg-red-50 disabled:bg-gray-200"
                 >
                   {leaveLoading ? 'Leaving...' : 'Leave Group'}
                 </button>
