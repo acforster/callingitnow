@@ -2,11 +2,21 @@
 
 import { Fragment, useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import Image, { StaticImageData } from 'next/image';
 import { useAuth } from '@/lib/auth';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { PlusIcon } from '@heroicons/react/20/solid';
+
+// Import the images directly
+import char1 from '@/public/char-1.png';
+import char2 from '@/public/char-2.png';
+import char3 from '@/public/char-3.png';
+import char4 from '@/public/char-4.png';
+import char5 from '@/public/char-5.png';
+import char6 from '@/public/char-6.png';
+
+const characters = [char1, char2, char3, char4, char5, char6];
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -14,12 +24,12 @@ function classNames(...classes: string[]) {
 
 export default function Navigation() {
   const { user, logout, loading } = useAuth();
-  const [characterImage, setCharacterImage] = useState('');
+  const [characterImage, setCharacterImage] = useState<StaticImageData | null>(null);
 
   useEffect(() => {
-    const charCount = 6;
-    const randomChar = Math.floor(Math.random() * charCount) + 1;
-    setCharacterImage(`/char-${randomChar}.png`);
+    // Select a random character image on component mount
+    const randomChar = characters[Math.floor(Math.random() * characters.length)];
+    setCharacterImage(randomChar);
   }, []);
 
   const navigation = [
@@ -42,7 +52,7 @@ export default function Navigation() {
                       width={40}
                       height={40}
                       className="h-10 w-10 mr-3"
-                      unoptimized // Add this if your images are not hosted on a CDN
+                      unoptimized // Keep this to prevent optimization issues
                     />
                   )}
                   <Link href="/" className="text-2xl font-bold text-primary-600">
