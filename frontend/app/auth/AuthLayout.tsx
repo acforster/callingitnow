@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface AuthLayoutProps {
   title: string;
@@ -9,25 +10,42 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-brand-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
-            {title}
-          </h2>
-          <div className="mt-2 text-sm text-gray-600">
-            {subtitle}
+    <div className="min-h-screen bg-brand-background">
+      <div className="flex flex-1">
+        {/* Left Column: Branding */}
+        <div className="relative hidden w-0 flex-1 lg:block">
+          <div className="flex h-full flex-col justify-center items-center p-12 bg-primary-700 text-white">
+            <Link href="/" className="flex items-center space-x-3">
+                <Image src="/logo.png" alt="CallingItNow Logo" width={60} height={60} />
+                <span className="text-3xl font-bold">CallingItNow</span>
+            </Link>
+            <p className="mt-4 text-lg text-primary-100">Make your predictions. Settle the score.</p>
           </div>
         </div>
-        
-        <div className="mt-8 bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
-          {children}
-        </div>
-        
-        <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-            ← Back to home
-          </Link>
+
+        {/* Right Column: Form */}
+        <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+          <div className="mx-auto w-full max-w-sm lg:w-96">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                {title}
+              </h2>
+              <div className="mt-2 text-sm text-gray-600">
+                {subtitle}
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <div>
+                {children}
+              </div>
+            </div>
+             <div className="mt-6 text-center">
+                <Link href="/" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+                    ← Back to home
+                </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
