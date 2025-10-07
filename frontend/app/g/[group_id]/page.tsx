@@ -42,7 +42,8 @@ function DeleteGroupSection({ groupId, groupName, onDeleteSuccess }: { groupId: 
       alert('Group deleted successfully.');
       onDeleteSuccess();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete group.');
+      const errorMessage = err.response?.data?.detail || 'Failed to delete group.';
+      alert(`Error: ${errorMessage}`);
     } finally {
       setDeleteLoading(false);
       setIsModalOpen(false);

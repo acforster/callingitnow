@@ -823,7 +823,7 @@ def delete_group(group_id: int, db: Session = Depends(get_db), current_user: Use
     if not group:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
 
-    if group.creator_id != current_user.user_id:
+    if group.created_by != current_user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the group creator can delete the group")
 
     # The database is set up with cascading deletes, so deleting the group
