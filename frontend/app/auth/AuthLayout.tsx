@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-// We are no longer using the Next.js Image component here
-// import Image from 'next/image'; 
+import Image from 'next/image';
+import logoAlpher from '@/public/logoalpher.png'; // Import the image directly
 
 interface AuthLayoutProps {
   title: string;
@@ -17,13 +17,7 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
         <div className="relative hidden w-0 flex-1 lg:block">
           <div className="flex h-full flex-col justify-center items-center p-12 bg-primary-700 text-white">
             <Link href="/" className="flex flex-col items-center space-y-4">
-                {/* Using a standard img tag to bypass Next.js optimization */}
-                <img 
-                  src="/logoalpher.png" 
-                  alt="CallingItNow Character Logo" 
-                  width="128" 
-                  height="128" 
-                />
+                <Image src={logoAlpher} alt="CallingItNow Character Logo" width={128} height={128} unoptimized />
                 <span className="text-3xl font-bold">CallingItNow</span>
             </Link>
             <p className="mt-6 text-lg text-primary-100">Make your predictions. Settle the score.</p>
@@ -31,7 +25,7 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
         </div>
 
         {/* Right Column: Form */}
-        <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+        <div className="flex flex-1 flex-col justify-center px-4 py-12 sm-px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="mx-auto w-full max-w-sm lg:w-96">
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-gray-900">
