@@ -609,12 +609,36 @@ def get_groups(sort: Optional[str] = Query(None, regex="^(popular|top)$"), db: S
 @app.get("/groups/me", response_model=GroupListResponse, tags=["groups"])
 def get_my_groups(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
-    Get a list of all groups the current user is a member of.
+    Get a list of all groups the current user is a member of,
+    sorted by the number of new predictions in the last 7 days.
     """
-    groups_db = db.query(Group).join(GroupMember).filter(GroupMember.user_id == current_user.user_id).order_by(Group.name).all()
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+
+    # Subquery to count recent predictions for each group
+    recent_predictions_subquery = db.query(
+        Prediction.group_id,
+        func.count(Prediction.prediction_id).label('recent_prediction_count')
+    ).filter(
+        Prediction.timestamp >= seven_days_ago
+    ).group_by(Prediction.group_id).subquery()
+
+    # Main query to get user's groups and join with the subquery
+    groups_db = db.query(
+        Group,
+        recent_predictions_subquery.c.recent_prediction_count
+    ).join(
+        GroupMember, Group.group_id == GroupMember.group_id
+    ).outerjoin(
+        recent_predictions_subquery, Group.group_id == recent_predictions_subquery.c.group_id
+    ).filter(
+        GroupMember.user_id == current_user.user_id
+    ).order_by(
+        desc(func.coalesce(recent_predictions_subquery.c.recent_prediction_count, 0)),
+        Group.name
+    ).all()
 
     group_responses = []
-    for group in groups_db:
+    for group, recent_prediction_count in groups_db:
         member_count = db.query(GroupMember).filter(GroupMember.group_id == group.group_id).count()
         group_responses.append(
             GroupResponse(
