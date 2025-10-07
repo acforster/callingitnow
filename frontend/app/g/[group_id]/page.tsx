@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import api, { Prediction as Call, User } from '@/lib/api';
+import { useState, useEffect, Fragment } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import api, { Prediction as Call } from '@/lib/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/lib/auth';
 import CallCard from '@/components/CallCard';
 import CreateCallForm from '@/components/CreateCallForm';
 import LeftSidebar from '@/components/LeftSidebar';
 import RightSidebar from '@/components/RightSidebar';
+import { Dialog, Transition } from '@headlessui/react';
+import { ExclamationTriangleIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 // Define the Group types
 interface GroupCreator {
@@ -27,8 +29,116 @@ interface Group {
   is_member?: boolean;
 }
 
+// New DeleteGroupSection component
+function DeleteGroupSection({ groupId, groupName, onDeleteSuccess }: { groupId: string; groupName: string; onDeleteSuccess: () => void; }) {
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/groups/${groupId}`);
+      alert('Group deleted successfully.');
+      onDeleteSuccess();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to delete group.');
+    } finally {
+      setDeleteLoading(false);
+      setIsModalOpen(false);
+    }
+  };
+
+  return (
+    <div className="mt-6 border-t border-gray-200 pt-4">
+      <button
+        onClick={() => setIsAccordionOpen(!isAccordionOpen)}
+        className="w-full flex justify-between items-center text-sm font-medium text-gray-600 hover:text-gray-900"
+      >
+        <span>Danger Zone</span>
+        <ChevronDownIcon className={`h-5 w-5 transition-transform ${isAccordionOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isAccordionOpen && (
+        <div className="mt-4">
+          <p className="text-sm text-gray-500">
+            Deleting the group is permanent and cannot be undone. All associated predictions and memberships will be removed.
+          </p>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="mt-3 w-full px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+          >
+            Delete Group
+          </button>
+        </div>
+      )}
+
+      <Transition appear show={isModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={() => setIsModalOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 flex items-center">
+                    <ExclamationTriangleIcon className="h-6 w-6 text-red-600 mr-2" />
+                    Delete Group
+                  </Dialog.Title>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Are you sure you want to delete the group "{groupName}"? This action is permanent and cannot be undone.
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => setIsModalOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-danger"
+                      onClick={handleDelete}
+                      disabled={deleteLoading}
+                    >
+                      {deleteLoading ? <LoadingSpinner size="sm" /> : 'Delete'}
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+    </div>
+  );
+}
+
+
 export default function GroupDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const groupId = params.group_id as string;
   const { user } = useAuth();
 
@@ -138,6 +248,8 @@ export default function GroupDetailPage() {
   const renderRightSidebar = () => {
     if (!group) return null;
 
+    const isOwner = user?.user_id === group.creator.user_id;
+
     return (
       <>
         <div className="bg-brand-background p-4 rounded-lg shadow-sm">
@@ -149,29 +261,36 @@ export default function GroupDetailPage() {
             {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
           </p>
           <p className="mt-4 text-gray-700">{group.description}</p>
+          
           {user && (
             <div className="mt-4">
-              {group.is_member ? (
+              {isOwner ? (
+                <DeleteGroupSection 
+                  groupId={groupId} 
+                  groupName={group.name} 
+                  onDeleteSuccess={() => router.push('/groups')}
+                />
+              ) : group.is_member ? (
                 <button
                   onClick={handleLeave}
                   disabled={leaveLoading}
-                  className="w-full px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-brand-background hover:bg-red-50 disabled:bg-gray-200"
+                  className="w-full btn-outline-danger"
                 >
-                  {leaveLoading ? 'Leaving...' : 'Leave Group'}
+                  {leaveLoading ? <LoadingSpinner size="sm" /> : 'Leave Group'}
                 </button>
               ) : (
                 <button
                   onClick={handleJoin}
                   disabled={joinLoading}
-                  className="w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400"
+                  className="w-full btn-primary"
                 >
-                  {joinLoading ? 'Joining...' : 'Join Group'}
+                  {joinLoading ? <LoadingSpinner size="sm" /> : 'Join Group'}
                 </button>
               )}
             </div>
           )}
         </div>
-        {group.is_member && (
+        {group.is_member && !isOwner && (
           <CreateCallForm groupId={groupId} onCallCreated={fetchGroupAndPredictions} />
         )}
       </>

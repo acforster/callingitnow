@@ -813,6 +813,25 @@ def leave_group(group_id: int, db: Session = Depends(get_db), current_user: User
 
     return MessageResponse(message="You have successfully left the group.")
 
+@app.delete("/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["groups"])
+def delete_group(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Delete a group. Only the creator of the group can delete it.
+    """
+    group = db.query(Group).filter(Group.group_id == group_id).first()
+
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+    if group.creator_id != current_user.user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the group creator can delete the group")
+
+    # The database is set up with cascading deletes, so deleting the group
+    # will automatically delete related memberships, predictions, etc.
+    db.delete(group)
+    db.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 if __name__ == "__main__":
     import uvicorn
