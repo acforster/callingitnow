@@ -324,7 +324,7 @@ def get_prediction(
     
     vote_score = calculate_vote_score(prediction.prediction_id, db)
     backing_count = db.query(Backing).filter(Backing.prediction_id == prediction.prediction_id).count()
-    comment_count=db.query(Comment).filter(Comment.prediction_id == prediction.prediction_id).count(),
+    comment_count=db.query(Comment).filter(Comment.prediction_id == prediction.prediction_id).count()
     user_vote = get_user_vote(prediction.prediction_id, current_user.user_id if current_user else None, db)
     user_backed = get_user_backing(prediction.prediction_id, current_user.user_id if current_user else None, db)
     
