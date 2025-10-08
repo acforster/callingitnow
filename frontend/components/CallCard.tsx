@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Prediction as Call, predictionsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import Link from 'next/link';
 import {
   HandThumbUpIcon,
   HandThumbDownIcon,
@@ -125,10 +126,10 @@ const CallCard: React.FC<CallCardProps> = ({ call, onUpdate }) => {
       </div>
 
       {/* Card Body */}
-      <div className="space-y-2">
+      <Link href={`/calls/${call.prediction_id}`} className="space-y-2 block hover:bg-gray-50 p-2 -m-2 rounded-lg transition-colors">
         <h2 className="text-xl font-bold text-gray-800">{call.title}</h2>
         <p className="text-gray-600 leading-relaxed">{call.content}</p>
-      </div>
+      </Link>
 
       {/* Card Footer */}
       <div className="flex justify-between items-center pt-4 border-t border-gray-100">
