@@ -154,3 +154,36 @@ class GroupListResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+# ===================
+# Comments
+# ===================
+
+class CommentVoteResponse(BaseModel):
+    user_id: int
+    value: int
+
+    class Config:
+        from_attributes = True
+
+class CommentCreate(BaseModel):
+    content: str
+    parent_comment_id: Optional[int] = None
+
+class CommentResponse(BaseModel):
+    comment_id: int
+    prediction_id: int
+    user: UserResponse
+    parent_comment_id: Optional[int]
+    content: str
+    timestamp: datetime
+    votes: List[CommentVoteResponse] = []
+    vote_score: int = 0
+    user_vote: Optional[int] = None
+    replies: List['CommentResponse'] = []
+
+    class Config:
+        from_attributes = True
+
+# This is needed for the recursive 'replies' field to work correctly
+CommentResponse.model_rebuild()

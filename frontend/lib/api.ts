@@ -188,4 +188,17 @@ export const getAuthToken = () => {
   return Cookies.get('access_token');
 };
 
+export interface Comment {
+  comment_id: number;
+  prediction_id: number;
+  user: User;
+  parent_comment_id: number | null;
+  content: string;
+  timestamp: string;
+  votes: any[]; // Simplified for now
+  vote_score: number;
+  user_vote?: number | null;
+  replies: Comment[];
+}
+
 export default api;

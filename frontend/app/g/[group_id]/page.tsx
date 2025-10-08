@@ -29,7 +29,7 @@ interface Group {
   is_member?: boolean;
 }
 
-// New DeleteGroupSection component
+// DeleteGroupSection component
 function DeleteGroupSection({ groupId, groupName, onDeleteSuccess }: { groupId: string; groupName: string; onDeleteSuccess: () => void; }) {
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);

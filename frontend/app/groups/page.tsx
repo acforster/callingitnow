@@ -189,7 +189,7 @@ export default function GroupsPage() {
       </div>
 
       <RightSidebar>
-        {renderCreateGroupForm()}
+        {user && renderCreateGroupForm()}
       </RightSidebar>
     </>
   );

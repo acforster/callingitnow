@@ -12,12 +12,12 @@ from datetime import datetime, timedelta
 from profanity_list import custom_bad_words
 from config import settings
 from database import get_db, engine, Base
-from models import User, Prediction, Vote, Backing, Group, GroupMember, LoginType, Visibility, GroupRole, GroupVisibility
+from models import User, Prediction, Vote, Backing, Group, GroupMember, LoginType, Visibility, GroupRole, GroupVisibility, Comment, CommentVote
 from schemas import (
     UserCreate, UserResponse, UserProfile, Token, LoginRequest, GoogleAuthRequest,
     PredictionCreate, PredictionResponse, PredictionListResponse, VoteRequest, VoteResponse,
     BackingResponse, PredictionReceipt, ErrorResponse, GroupCreate, GroupResponse, GroupListResponse,
-    MessageResponse
+    MessageResponse, CommentCreate, CommentResponse
 )
 
 from auth import (
@@ -832,6 +832,157 @@ def delete_group(group_id: int, db: Session = Depends(get_db), current_user: Use
     db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# ===================
+# Comments
+# ===================
+
+def get_comment_response(comment: Comment, db: Session, current_user: Optional[User]) -> CommentResponse:
+    """Helper function to construct a CommentResponse from a Comment object."""
+    vote_score = sum(v.value for v in comment.votes)
+    user_vote = next((v.value for v in comment.votes if current_user and v.user_id == current_user.user_id), None)
+    
+    return CommentResponse(
+        comment_id=comment.comment_id,
+        prediction_id=comment.prediction_id,
+        user=comment.user,
+        parent_comment_id=comment.parent_comment_id,
+        content=comment.content,
+        timestamp=comment.timestamp,
+        votes=[v for v in comment.votes],
+        vote_score=vote_score,
+        user_vote=user_vote,
+        replies=[get_comment_response(reply, db, current_user) for reply in comment.replies]
+    )
+
+@app.post("/predictions/{prediction_id}/comments", response_model=CommentResponse, status_code=status.HTTP_201_CREATED, tags=["comments"])
+def create_comment(
+    prediction_id: int,
+    comment_data: CommentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new comment on a prediction."""
+    prediction = db.query(Prediction).filter(Prediction.prediction_id == prediction_id).first()
+    if not prediction:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prediction not found")
+
+    if comment_data.parent_comment_id:
+        parent_comment = db.query(Comment).filter(Comment.comment_id == comment_data.parent_comment_id).first()
+        if not parent_comment or parent_comment.prediction_id != prediction_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid parent comment")
+
+    new_comment = Comment(
+        content=comment_data.content,
+        prediction_id=prediction_id,
+        user_id=current_user.user_id,
+        parent_comment_id=comment_data.parent_comment_id
+    )
+    db.add(new_comment)
+    db.commit()
+    db.refresh(new_comment)
+    
+    return get_comment_response(new_comment, db, current_user)
+
+@app.get("/predictions/{prediction_id}/comments", response_model=List[CommentResponse], tags=["comments"])
+def get_comments_for_prediction(
+    prediction_id: int,
+    sort: str = Query("top", regex="^(top|new|controversial)$"),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """Get all comments for a prediction, sorted and nested."""
+    # Fetch all comments for the prediction to build the hierarchy
+    all_comments = db.query(Comment).filter(Comment.prediction_id == prediction_id).all()
+    
+    # Create a dictionary for easy access
+    comment_map = {c.comment_id: c for c in all_comments}
+    
+    # Build the nested structure
+    root_comments = []
+    for comment in all_comments:
+        if comment.parent_comment_id:
+            parent = comment_map.get(comment.parent_comment_id)
+            if parent:
+                if not hasattr(parent, 'temp_replies'):
+                    parent.temp_replies = []
+                parent.temp_replies.append(comment)
+        else:
+            root_comments.append(comment)
+
+    # Attach the replies properly
+    for comment in all_comments:
+        if hasattr(comment, 'temp_replies'):
+            comment.replies = comment.temp_replies
+
+    # Sort the top-level comments
+    if sort == "new":
+        root_comments.sort(key=lambda c: c.timestamp, reverse=True)
+    elif sort == "top":
+        root_comments.sort(key=lambda c: sum(v.value for v in c.votes), reverse=True)
+    # 'controversial' could be implemented later if needed
+
+    return [get_comment_response(comment, db, current_user) for comment in root_comments]
+
+@app.post("/comments/{comment_id}/vote", response_model=MessageResponse, tags=["comments"])
+def vote_on_comment(
+    comment_id: int,
+    vote_request: VoteRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Cast a vote on a comment."""
+    comment = db.query(Comment).filter(Comment.comment_id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+
+    existing_vote = db.query(CommentVote).filter(
+        CommentVote.comment_id == comment_id,
+        CommentVote.user_id == current_user.user_id
+    ).first()
+
+    if existing_vote:
+        if vote_request.value == 0: # User wants to remove their vote
+            db.delete(existing_vote)
+            message = "Vote removed"
+        elif existing_vote.value == vote_request.value: # Vote is the same, do nothing or treat as removal
+            db.delete(existing_vote)
+            message = "Vote removed"
+        else: # Change vote
+            existing_vote.value = vote_request.value
+            message = "Vote updated"
+    elif vote_request.value != 0: # New vote
+        new_vote = CommentVote(
+            comment_id=comment_id,
+            user_id=current_user.user_id,
+            value=vote_request.value
+        )
+        db.add(new_vote)
+        message = "Vote cast"
+    else: # Trying to cast a '0' vote from a neutral state
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid vote value")
+
+    db.commit()
+    return MessageResponse(message=message)
+
+@app.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["comments"])
+def delete_comment(
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a comment. Only the author can delete their comment."""
+    comment = db.query(Comment).filter(Comment.comment_id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+
+    if comment.user_id != current_user.user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete your own comments")
+
+    db.delete(comment)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    
 
 if __name__ == "__main__":
     import uvicorn

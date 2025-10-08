@@ -43,6 +43,8 @@ class User(Base):
     backings = relationship("Backing", back_populates="backer")
     created_groups = relationship("Group", back_populates="creator")
     memberships = relationship("GroupMember", back_populates="user")
+    comments = relationship("Comment", back_populates="user")
+    comment_votes = relationship("CommentVote", back_populates="user")
 
 
 
@@ -62,6 +64,7 @@ class Prediction(Base):
     contains_profanity = Column(Boolean, default=False, nullable=False)
     
     # Relationships
+    comments = relationship("Comment", back_populates="prediction", cascade="all, delete-orphan")
     user = relationship("User", back_populates="predictions")
     votes = relationship("Vote", back_populates="prediction")
     backings = relationship("Backing", back_populates="prediction")
@@ -98,6 +101,43 @@ class Backing(Base):
     
     # Unique constraint
     __table_args__ = (UniqueConstraint('prediction_id', 'backer_user_id', name='unique_backing_per_user'),)
+
+class Comment(Base):
+    __tablename__ = "comments"
+
+    comment_id = Column(Integer, primary_key=True, index=True)
+    prediction_id = Column(Integer, ForeignKey("predictions.prediction_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    parent_comment_id = Column(Integer, ForeignKey("comments.comment_id"), nullable=True)
+
+    content = Column(Text, nullable=False)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    user = relationship("User", back_populates="comments")
+    prediction = relationship("Prediction", back_populates="comments")
+    votes = relationship("CommentVote", back_populates="comment", cascade="all, delete-orphan")
+    
+    # Self-referential relationship for replies
+    parent = relationship("Comment", remote_side=[comment_id], back_populates="replies")
+    replies = relationship("Comment", back_populates="parent", cascade="all, delete-orphan")
+
+class CommentVote(Base):
+    __tablename__ = "comment_votes"
+
+    vote_id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("comments.comment_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    value = Column(Integer, nullable=False)  # -1 or 1
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    comment = relationship("Comment", back_populates="votes")
+    user = relationship("User", back_populates="comment_votes")
+
+    # Unique constraint
+    __table_args__ = (UniqueConstraint('comment_id', 'user_id', name='unique_comment_vote_per_user'),)
+
 
 class Group(Base):
     __tablename__ = "groups"

@@ -2,70 +2,79 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { predictionsAPI, Prediction } from '@/lib/api';
-import { format } from 'date-fns';
+import api, { Prediction } from '@/lib/api';
+import LeftSidebar from '@/components/LeftSidebar';
+import RightSidebar from '@/components/RightSidebar';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import CallCard from '@/components/CallCard';
+import CommentSection from '@/components/CommentSection';
 
-export default function PredictionPage() {
+export default function CallDetailPage() {
   const params = useParams();
-  const id = params.id as string;
-  const [prediction, setPrediction] = useState<Prediction | null>(null);
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const predictionId = parseInt(id, 10);
+
+  const [call, setCall] = useState<Prediction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      const fetchPrediction = async () => {
-        try {
-          setLoading(true);
-          const data = await predictionsAPI.get(parseInt(id, 10)); // Changed from getById to get
-          setPrediction(data);
-        } catch (err) {
-          setError('Failed to load prediction. It may be private or may not exist.');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchPrediction();
+  const fetchCall = async () => {
+    if (!predictionId) return;
+    // Don't set loading to true on refetch, just on initial load
+    if (!call) setLoading(true); 
+    try {
+      // The backend endpoint for a single prediction is /predictions/{id}
+      const response = await api.get(`/predictions/${predictionId}`);
+      setCall(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load the prediction. It may not exist or you may not have permission to view it.');
+      setCall(null);
+    } finally {
+      setLoading(false);
     }
-  }, [id]);
+  };
 
-  if (loading) {
-    return <div className="text-center py-10">Loading prediction...</div>;
-  }
+  useEffect(() => {
+    if (predictionId) {
+      fetchCall();
+    }
+  }, [predictionId]);
 
-  if (error) {
-    return <div className="text-center py-10 text-red-500">{error}</div>;
-  }
+  const renderMainContent = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center py-12">
+          <LoadingSpinner />
+        </div>
+      );
+    }
 
-  if (!prediction) {
-    return <div className="text-center py-10">Prediction not found.</div>;
-  }
+    if (error || !call) {
+      return (
+        <div className="text-center py-12 text-red-600 bg-brand-background rounded-lg shadow-sm p-4">
+          <p>{error || 'Prediction not found.'}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <CallCard call={call} onUpdate={fetchCall} />
+        <CommentSection predictionId={call.prediction_id} />
+      </div>
+    );
+  };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold leading-6 text-gray-900">{prediction.title}</h1>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Called by @{prediction.user.handle} on {format(new Date(prediction.timestamp), "MMMM d, yyyy 'at' h:mm a")}
-          </p>
-        </div>
-        <div className="px-4 py-5 sm:p-6">
-          <div className="text-gray-700 whitespace-pre-wrap">
-            {prediction.content}
-          </div>
-        </div>
-        <div className="px-4 py-4 sm:px-6 bg-gray-50">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Category: <span className="font-medium text-gray-900">{prediction.category}</span>
-            </div>
-            <div className="text-sm text-gray-600">
-              Visibility: <span className="font-medium text-gray-900">{prediction.visibility}</span>
-            </div>
-          </div>
-        </div>
+    <>
+      <LeftSidebar />
+      <div className="col-span-12 lg:col-span-6 order-2 lg:order-2">
+        {renderMainContent()}
       </div>
-    </div>
+      <RightSidebar>
+        {/* Contextual sidebar content can go here if needed */}
+      </RightSidebar>
+    </>
   );
 }
