@@ -230,6 +230,8 @@ def create_prediction(prediction_data: PredictionCreate, db: Session = Depends(g
         **prediction.__dict__,
         user=prediction.user,
         vote_score=0,
+        backing_count=0,
+        comment_count=0,
         user_vote=None,
         user_backed=False,
         backing_count=0
@@ -276,6 +278,7 @@ def get_predictions(
         backing_count = db.query(Backing).filter(Backing.prediction_id == prediction.prediction_id).count()
         user_vote = get_user_vote(prediction.prediction_id, current_user.user_id if current_user else None, db)
         user_backed = get_user_backing(prediction.prediction_id, current_user.user_id if current_user else None, db)
+        comment_count = db.query(Comment).filter(Comment.prediction_id == prediction.prediction_id).count()
         
         prediction_responses.append(PredictionResponse(
             prediction_id=prediction.prediction_id,
@@ -291,7 +294,8 @@ def get_predictions(
             vote_score=vote_score,
             backing_count=backing_count,
             user_vote=user_vote,
-            user_backed=user_backed
+            user_backed=user_backed,
+            comment_count=comment_count,
         ))
         
     return PredictionListResponse(
@@ -307,7 +311,8 @@ def get_prediction(
     prediction_id: int,
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
-):
+    ):
+
     """Get a specific prediction by ID."""
     prediction = db.query(Prediction).filter(Prediction.prediction_id == prediction_id).first()
     if not prediction:
@@ -319,6 +324,7 @@ def get_prediction(
     
     vote_score = calculate_vote_score(prediction.prediction_id, db)
     backing_count = db.query(Backing).filter(Backing.prediction_id == prediction.prediction_id).count()
+    comment_count=db.query(Comment).filter(Comment.prediction_id == prediction.prediction_id).count(),
     user_vote = get_user_vote(prediction.prediction_id, current_user.user_id if current_user else None, db)
     user_backed = get_user_backing(prediction.prediction_id, current_user.user_id if current_user else None, db)
     
@@ -982,7 +988,7 @@ def delete_comment(
     db.delete(comment)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-    
+
 
 if __name__ == "__main__":
     import uvicorn

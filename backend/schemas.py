@@ -70,6 +70,7 @@ class PredictionResponse(PredictionBase):
     user: UserResponse
     vote_score: int = 0
     backing_count: int = 0
+    comment_count: int = 0
     user_vote: Optional[int] = None  # Current user's vote
     user_backed: bool = False  # Whether current user backed this
     

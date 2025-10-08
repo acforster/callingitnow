@@ -60,6 +60,7 @@ export interface Prediction {
   user: User;
   vote_score: number;
   backing_count: number;
+  comment_count: number;
   user_vote?: number;
   user_backed: boolean;
 }

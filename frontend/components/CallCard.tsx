@@ -11,6 +11,7 @@ import {
   ShareIcon,
   EyeIcon,
   EyeSlashIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
 } from '@heroicons/react/24/outline';
 import {
   HandThumbUpIcon as HandThumbUpSolidIcon,
@@ -194,6 +195,12 @@ const CallCard: React.FC<CallCardProps> = ({ call, onUpdate }) => {
               </span>
             </button>
           )}
+          <Link href={`/calls/${call.prediction_id}`} className="flex items-center space-x-2 text-gray-500 hover:text-primary-600 transition-colors">
+            <ChatBubbleOvalLeftEllipsisIcon className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              {call.comment_count} {call.comment_count === 1 ? 'Comment' : 'Comments'}
+            </span>
+          </Link>
         </div>
 
         <div className="flex items-center space-x-2">
