@@ -348,6 +348,7 @@ def get_prediction(
         ),
         vote_score=vote_score,
         backing_count=backing_count,
+        comment_count=comment_count,
         user_vote=user_vote,
         user_backed=user_backed
     )
