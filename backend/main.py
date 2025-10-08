@@ -234,7 +234,6 @@ def create_prediction(prediction_data: PredictionCreate, db: Session = Depends(g
         comment_count=0,
         user_vote=None,
         user_backed=False,
-        backing_count=0
     )
 
 
